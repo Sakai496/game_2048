@@ -1,196 +1,152 @@
-int ix;
-int iy;
-IntList myList;
-int count;
-int m;
-int n;
-int o;
-String s;
+int p;        //move(),sum(),keyPressed()で使用
+int q;        //move(),sum(),keyPressed()で使用
+int r;        //gameover(),writeMap()で使用
 
-int[][] lista = new int[4][4];
+int[][] mapList = new int[4][4];    //4*4のマップを生成(要素はすべて0)
 
-
+//開始時のランダム生成とマップの表示
 void setup() {
-  size(300, 300);
-  count = 0;
-  for (int i = 0; i < 2; i++) {
+  size(500, 300);
+  for (int i = 0; i < 2; i++) {      //2つ生成
     add2();
   }
+  gameover();
   writeMap();
 }
 
 void draw() {
 }
 
+//キー入力の処理
 void keyPressed() {
   if (keyCode == UP) {
-    for (int i = 0; i < 4; i++) {
-      moveUP(i);
-      for (int j = 0; j < 3; j++) {
-        if ((lista[j][i] != 0)&&(lista[j][i] == lista[j+1][i])) {
-          lista[j][i] *= 2;
-          lista[j+1][i] = 0;
-        }
-      }
-      moveUP(i);
-    }
+    p = 0;
   }
   if (keyCode == DOWN) {
-    for (int i = 0; i < 4; i++) {
-      moveDOWN(i);
-      for (int j = 0; j < 3; j++) {
-        if ((lista[3-j][i] != 0)&&(lista[3-j][i] == lista[2-j][i])) {
-          lista[3-j][i] *= 2;
-          lista[2-j][i] = 0;
-        }
-      }
-      moveDOWN(i);
-    }
+    p = 1;
   }
   if (keyCode == LEFT) {
-    for (int i = 0; i < 4; i++) {
-      moveLEFT(i);
-      for (int j = 0; j < 3; j++) {
-        if ((lista[i][j] != 0)&&(lista[i][j] == lista[i][j+1])) {
-          lista[i][j] *= 2;
-          lista[i][j+1] = 0;
-        }
-      }
-      moveLEFT(i);
-    }
+    p = 2;
   }
   if (keyCode == RIGHT) {
-    for (int i = 0; i < 4; i++) {
-      moveRIGHT(i);
-      for (int j = 0; j < 3; j++) {
-        if ((lista[i][3-j] != 0)&&(lista[i][3-j] == lista[i][2-j])) {
-          lista[i][3-j] *= 2;
-          lista[i][2-j] = 0;
-        }
-      }
-      moveRIGHT(i);
-    }
+    p = 3;
   }
-  add2();
+  q = 0;      //移動回数を初期化(今回の入力で1回でも動いたかを記録)
+  for (int i = 0; i < 4; i++) {
+    move(i);    //移動して
+    sum(i);     //足して
+    move(i);    //移動する
+  }
+  if (q > 0) {        //一回でも動いたなら
+    add2();
+  }
+  gameover();
   writeMap();
 }
 
-
-
-void moveUP(int i) {
-  n = 0;
-  for (int j = 0; j < 3; j++) {
-    o = 0;
-    for (int k = 0; k < 4-j; k++) {
-      if (lista[3-k][i] != 0) {
+//0以外の数字を手前(移動方向)に寄せる処理(足し算はしない)
+void move(int i) {      //4回ループ
+  int n = 0;            //ずらした回数を記録(3回まで)
+  for (int j = 0; j < 3; j++) {          //3回ループ(1番手前以外を参照)
+    int o = 0;          //j以降の数に0以外があるかを確認
+    for (int k = 0; k < 4-j; k++) {      //奥から手前にjまで確認
+      int[] listd = {3-k, k, i, i};      //x,y座標の指定
+      if (mapList[listd[p]][listd[(p+2)%4]] != 0) {      //0以外があったら((p+2)%4で2つずれる)
         o = 1;
       }
     }
-    while (lista[j][i] == 0 && n < 3 && o != 0) {
-      for (int k = 0; k < 3-j; k++) {
-        lista[k+j][i] = lista[k+j+1][i];
+    int[] liste = {j, 3-j, i, i};      //縦軸と横軸の指定
+    while (mapList[liste[p]][liste[(p+2)%4]] == 0 && n < 3 && o != 0) {      //現在地が0で、奥に0でない数があれば
+      for (int k = 0; k < 3-j; k++) {          //現在地より奥にあるマスの数だけループ
+        int[] listf = {k+j, 3-k-j, i, i};      //x,y座標の指定
+        int[] listg = {1+k+j, 2-k-j, i, i};    //移動方向の指定(手前から奥)
+        mapList[listf[p]][listf[(p+2)%4]] = mapList[listg[p]][listg[(p+2)%4]];      //一つ奥の値をコピー
       }
-      lista[3][i] = 0;
-      n += 1;
+      int[] listh = {3, 0, i, i};              //1番奥の座標を指定
+      mapList[listh[p]][listh[(p+2)%4]] = 0;
+      n += 1;      //ずらした回数を記録
+      q += 1;      //移動回数を増やす
     }
   }
 }
 
-void moveDOWN(int i){
-  n = 0;
-  for (int j = 0; j < 3; j++) {
-    o = 0;
-    for (int k = 0; k < 4-j; k++) {
-      if (lista[k][i] != 0) {
-        o = 1;
-      }
-    }
-    while (lista[3-j][i] == 0 && n < 3 && o != 0) {
-      for (int k = 0; k < 3-j; k++) {
-        lista[3-k-j][i] = lista[2-k-j][i];
-      }
-      lista[0][i] = 0;
-      n += 1;
+//連続した同じ数を足す処理
+void sum(int i) {      //4回ループ
+  for (int j = 0; j < 3; j++) {        // 3回ループ
+    int[] listi = {j, 3-j, i, i};      //x,y座標の指定
+    int[] listj = {1+j, 2-j, i, i};    //移動方向の指定(手前から奥)
+    if ((mapList[listi[p]][listi[(p+2)%4]] != 0)&&(mapList[listi[p]][listi[(p+2)%4]] == mapList[listj[p]][listj[(p+2)%4]])) {  //現在地が0でなく、次の数と値が等しいなら
+      mapList[listi[p]][listi[(p+2)%4]] *= 2;      //現在地を2倍
+      mapList[listj[p]][listj[(p+2)%4]] = 0;       //次の数を0にする
+      q += 1;      //移動回数を増やす(keyPressed()で使用)
     }
   }
 }
 
-void moveLEFT(int i){
-  n = 0;
-  for (int j = 0; j < 3; j++) {
-    o = 0;
-    for (int k = 0; k < 4-j; k++) {
-      if (lista[i][3-k] != 0) {
-        o = 1;
-      }
-    }
-    while (lista[i][j] == 0 && n < 3 && o != 0) {
-      for (int k = 0; k < 3-j; k++) {
-        lista[i][k+j] = lista[i][k+j+1];
-      }
-      lista[i][3] = 0;
-      n += 1;
-    }
-  }  
-}
-
-void moveRIGHT(int i){
-  n = 0;
-  for (int j = 0; j < 3; j++) {
-    o = 0;
-    for (int k = 0; k < 4-j; k++) {
-      if (lista[i][k] != 0) {
-        o = 1;
-      }
-    }
-    while (lista[i][3-j] == 0 && n < 3 && o != 0) {
-      for (int k = 0; k < 3-j; k++) {
-        lista[i][3-k-j] = lista[i][2-k-j];
-      }
-      lista[i][0] = 0;
-      n += 1;
-    }
-  }  
-}
-
+//ランダムに2を生成する処理
 void add2() {
-  count = 0;
-  m = 0;
-  StringList listb = new StringList();
-  for (int i = 0; i < 16; i++) {
-    listb.append(str(i));
+  int count = 0;      //2の生成回数(1回だけにする)
+  int m = 0;          //シャッフル後リストの座標
+  StringList orderedList = new StringList();      //空の文字列リスト
+  for (int i = 0; i < 16; i++) {            //0から15まで追加
+    orderedList.append(str(i));
   }
-  listb.shuffle();
-  int[] listc = new int[16];
+  orderedList.shuffle();      //シャッフルする
+  int[] shuffledList = new int[16];          //0が16個入ったリスト
   for (int i = 0; i < 16; i++) {
-    listc[i] = Integer.parseInt(listb.get(i));
+    shuffledList[i] = Integer.parseInt(orderedList.get(i));      //シャッフル後の数列を取得
   }
-  while (count < 1) {
-    if (lista[listc[m]/4][listc[m]%4] == 0) {
-      lista[listc[m]/4][listc[m]%4] = 2;
-      println(listc[m]);
-      count++;
+  while (count < 1) {      //2が生成されるまでループ
+    if (mapList[shuffledList[m]/4][shuffledList[m]%4] == 0) {      //現在地が0なら
+      mapList[shuffledList[m]/4][shuffledList[m]%4] = 2;           //2を生成
+      count++;      //生成回数を記録
     }
-    m++;
+    if (count == 0) {      //生成できていないなら
+      m++;                 //次の座標を指定
+    }
   }
 }
 
+//動かせなくなったかの確認(0があれば動かせる、連続した同じ数があれば動かせる)
+void gameover() {
+  r = 0;
+  for (int i = 0; i < 4; i++) {
+    for (int j = 0; j < 4; j++) {
+      if (mapList[j][i] == 0) {
+        r = 1;
+      }
+    }
+    for (int j = 0; j < 3; j++) {
+      if (mapList[j][i] == mapList[j+1][i]) {
+        r = 1;
+      }
+      if (mapList[i][j] == mapList[i][j+1]) {
+        r = 1;
+      }
+    }
+  }
+}
+
+//マップの表示とゲームオーバーの表示
 void writeMap() {
   background(255);
-  println(" ");
+  textSize(50);
+  if (r == 0) {                       //動かせなくなったら
+    background(255, 80, 30);
+    text("Game Over", 190, 250);      //テキスト表示
+  }
+  noStroke();
   for (int i = 0; i < 4; i++) {
-    s = " ";
     for (int j = 0; j < 4; j++) {
-      s += str(lista[i][j]);
-      if (lista[i][j] < 10) {
-        s += "   ";
+      String s = str(mapList[j][i]);     //現在地の数を記録
+      fill(250);                       //背景の色
+      if (mapList[j][i] == 0) {          //現在地が0なら
+        s = " ";                       //空白にして
+        fill(247);                     //背景の色を変える
       }
-      else{
-        s += " ";
-      }
+      rect((i+1)*100, j*50+10, 98, 48);      //数ごとに背景を表示
+      fill(0);                               //数の色
+      text(s, (i+1)*100, (j+1)*50);          //数を表示
     }
-    fill(0);
-    textSize(60);
-    text(s, 0, 50*(i+1));
   }
 }
