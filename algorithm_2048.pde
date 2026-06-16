@@ -1,11 +1,15 @@
 int p;        //move(),sum(),keyPressed()で使用
 int q;        //move(),sum(),keyPressed()で使用
 int r;        //gameover(),writeMap()で使用
+int score;    //スコアを記録する変数
 
 int[][] mapList = new int[4][4];    //4*4のマップを生成(要素はすべて0)
 
 //開始時のランダム生成とマップの表示
 void setup() {
+  PFont font = createFont("Meiryo", 50);
+  textFont(font);
+  score = 0;
   size(500, 300);
   for (int i = 0; i < 2; i++) {      //2つ生成
     add2();
@@ -77,6 +81,7 @@ void sum(int i) {      //4回ループ
     int[] listj = {1+j, 2-j, i, i};    //移動方向の指定(手前から奥)
     if ((mapList[listi[p]][listi[(p+2)%4]] != 0)&&(mapList[listi[p]][listi[(p+2)%4]] == mapList[listj[p]][listj[(p+2)%4]])) {  //現在地が0でなく、次の数と値が等しいなら
       mapList[listi[p]][listi[(p+2)%4]] *= 2;      //現在地を2倍
+      score += mapList[listi[p]][listi[(p+2)%4]];   //スコアに加算
       mapList[listj[p]][listj[(p+2)%4]] = 0;       //次の数を0にする
       q += 1;      //移動回数を増やす(keyPressed()で使用)
     }
@@ -131,6 +136,7 @@ void gameover() {
 void writeMap() {
   background(255);
   textSize(50);
+  text("スコア：" + score, 20, 250);    //スコアのテキスト
   if (r == 0) {                       //動かせなくなったら
     background(255, 80, 30);
     text("Game Over", 190, 250);      //テキスト表示
