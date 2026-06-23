@@ -1,28 +1,72 @@
+import java.util.Arrays;
 int p;        //move(),sum(),keyPressed()で使用
 int q;        //move(),sum(),keyPressed()で使用
 int r;        //gameover(),writeMap()で使用
-int score;    //スコアを記録する変数
-
-int[][] mapList = new int[4][4];    //4*4のマップを生成(要素はすべて0)
+int s;        //setup(),mousePressed(),keyPressed()で使用
+int t;        //checkRetry()で使用
+int score;    //sum(),writeMap()で使用
+int[][] mapList;    //マップの状態を記録
+int[][] recordList;    //keyPressed()で使用
+int[][] tentativeList;    //keyPressed()で使用(仮のリスト)
 
 //開始時のランダム生成とマップの表示
 void setup() {
+  size(500, 400);
   PFont font = createFont("Meiryo", 50);
   textFont(font);
-  score = 0;
-  size(500, 300);
-  for (int i = 0; i < 2; i++) {      //2つ生成
-    add2();
-  }
-  gameover();
-  writeMap();
+  background(255);
+  fill(200, 200, 255);
+  noStroke();
+  rect(170, 210, 160, 80);
+  textSize(80);
+  fill(0);
+  textAlign(CENTER);
+  text("2048", width/2, 150);
+  textSize(30);
+  text("start", width/2, 260);
+  textAlign(LEFT);
+  s = 0;      //ゲーム開始前の状態を記録(0:開始前、1:開始後)
 }
 
 void draw() {
 }
 
+void mousePressed() {
+  if (mouseButton == LEFT && s == 0) {      //ゲーム開始前の状態
+    if (mouseX > 170 && mouseX < 330 && mouseY > 210 && mouseY < 290) {
+      s = 1;      //ゲーム開始後の状態を記録(0:開始前、1:開始後)
+      startGame();
+    }
+  }
+  if (mouseButton == LEFT && t == 1) {      //リトライ確認中の状態
+    if (mouseX > 70 && mouseX < 230 && mouseY > 120 && mouseY < 190) {      //いいえを選択した場合
+      t = 0;      //リトライ確認を終了
+      writeMap();
+    }
+    if (mouseX > 270 && mouseX < 430 && mouseY > 120 && mouseY < 190) {      //はいを選択した場合
+      t = 0;
+      startGame();
+    }
+  }
+}
+
 //キー入力の処理
 void keyPressed() {
+  if (s == 0 || t == 1) {      //ゲーム開始前、リトライ確認中
+    return;     //キー入力を無視する
+  }
+  if (key == 'r' || key == 'R') {     //リトライが押された場合
+    checkRetry();
+    return;
+  }
+  if (key == 'z' || key == 'Z') {
+    if (recordList != null) {
+      loadMap(mapList, recordList);      //1つ前のマップを復元
+      gameover();
+      writeMap();
+    }
+    return;
+  }
   if (keyCode == UP) {
     p = 0;
   }
@@ -35,14 +79,18 @@ void keyPressed() {
   if (keyCode == RIGHT) {
     p = 3;
   }
+
+  loadMap(tentativeList, mapList);    //移動前のマップを記録
+
   q = 0;      //移動回数を初期化(今回の入力で1回でも動いたかを記録)
   for (int i = 0; i < 4; i++) {
     move(i);    //移動して
     sum(i);     //足して
     move(i);    //移動する
   }
-  if (q > 0) {        //一回でも動いたなら
+  if (q != 0) {        //一回でも動いたなら
     add2();
+    loadMap(recordList, tentativeList);    //1つ前のマップを更新
   }
   gameover();
   writeMap();
@@ -69,7 +117,7 @@ void move(int i) {      //4回ループ
       int[] listh = {3, 0, i, i};              //1番奥の座標を指定
       mapList[listh[p]][listh[(p+2)%4]] = 0;
       n += 1;      //ずらした回数を記録
-      q += 1;      //移動回数を増やす
+      q = 1;      //移動を記録(keyPressed()で使用)
     }
   }
 }
@@ -83,7 +131,7 @@ void sum(int i) {      //4回ループ
       mapList[listi[p]][listi[(p+2)%4]] *= 2;      //現在地を2倍
       score += mapList[listi[p]][listi[(p+2)%4]];   //スコアに加算
       mapList[listj[p]][listj[(p+2)%4]] = 0;       //次の数を0にする
-      q += 1;      //移動回数を増やす(keyPressed()で使用)
+      q = 1;      //移動を記録(keyPressed()で使用)
     }
   }
 }
@@ -132,27 +180,67 @@ void gameover() {
   }
 }
 
-//マップの表示とゲームオーバーの表示
+//マップ、ゲームオーバー、スコアの表示
 void writeMap() {
   background(255);
   textSize(50);
-  text("スコア：" + score, 20, 250);    //スコアのテキスト
   if (r == 0) {                       //動かせなくなったら
     background(255, 80, 30);
-    text("Game Over", 190, 250);      //テキスト表示
+    text("Game Over", 190, 350);      //テキスト表示
   }
-  noStroke();
   for (int i = 0; i < 4; i++) {
     for (int j = 0; j < 4; j++) {
       String s = str(mapList[j][i]);     //現在地の数を記録
-      fill(250);                       //背景の色
+      fill(250);                         //背景の色
       if (mapList[j][i] == 0) {          //現在地が0なら
-        s = " ";                       //空白にして
-        fill(247);                     //背景の色を変える
+        s = " ";                         //空白にして
+        fill(247);                       //背景の色を変える
       }
-      rect((i+1)*100, j*50+10, 98, 48);      //数ごとに背景を表示
+      rect(i*100+50, j*50+10, 98, 48);      //数ごとに背景を表示
       fill(0);                               //数の色
-      text(s, (i+1)*100, (j+1)*50);          //数を表示
+      text(s, i*100+50, (j+1)*50);          //数を表示
+    }
+  }
+  textSize(20);
+  text("スコア：" + score, 20, 250);    //スコアのテキスト
+  text("リトライ：Rキー", 20, 280);    //リトライのテキスト
+  text("一回戻す：Zキー", 20, 310);    //一回戻すのテキスト
+}
+
+//ゲームの初期化
+void startGame() {
+  mapList = new int[4][4];    //4*4のマップを生成(要素はすべて0)
+  recordList = new int[4][4]; //1つ前のマップを記録するリストを生成
+  tentativeList = new int[4][4];  //recordListの仮のリストを生成
+  score = 0;
+  for (int i = 0; i < 2; i++) {      //2つ生成
+    add2();
+  }
+  loadMap(recordList, mapList);    //開始前のマップを記録
+  gameover();
+  writeMap();
+}
+
+//リトライを確認するテキスト
+void checkRetry() {
+  fill(235);
+  rect(50, 50, 400, 150);
+  fill(220);
+  rect(70, 120, 160, 70);
+  fill(200, 200, 255);
+  rect(270, 120, 160, 70);
+  fill(0);
+  text("本当にリトライしますか？", 130, 100);
+  text("いいえ", 120, 160);
+  text("はい", 330, 160);
+  t = 1;      //リトライ確認中の状態にする
+}
+
+//マップの状態をコピーする処理
+void loadMap(int[][] in, int[][] out) {
+  for (int i = 0; i < 4; i++) {
+    for (int j = 0; j < 4; j++) {
+      in[j][i] = out[j][i];
     }
   }
 }
