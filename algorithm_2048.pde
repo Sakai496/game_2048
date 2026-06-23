@@ -1,6 +1,7 @@
 int p;        //move(),sum(),keyPressed()で使用
 int q;        //move(),sum(),keyPressed()で使用
 int r;        //gameover(),writeMap()で使用
+String s;     //drawMap()で使用
 
 int[][] mapList = new int[4][4];    //4*4のマップを生成(要素はすべて0)
 
@@ -98,7 +99,7 @@ void add2() {
   }
   while (count < 1) {      //2が生成されるまでループ
     if (mapList[shuffledList[m]/4][shuffledList[m]%4] == 0) {      //現在地が0なら
-      mapList[shuffledList[m]/4][shuffledList[m]%4] = 2;           //2を生成
+      mapList[shuffledList[m]/4][shuffledList[m]%4] = 2;      //2を生成
       count++;      //生成回数を記録
     }
     if (count == 0) {      //生成できていないなら
@@ -142,11 +143,23 @@ void writeMap() {
       fill(250);                       //背景の色
       if (mapList[j][i] == 0) {          //現在地が0なら
         s = " ";                       //空白にして
-        fill(247);                     //背景の色を変える
-      }
+        fill(247);                   //背景の色を変える
+      }   
       rect((i+1)*100, j*50+10, 98, 48);      //数ごとに背景を表示
-      fill(0);                               //数の色
-      text(s, (i+1)*100, (j+1)*50);          //数を表示
+      numImage(j,i,s);
+      fill(0);//数の色
+      //text(s, (i+1)*100, (j+1)*50);      //数を表示
+    }
+  }
+}
+
+//数字を画像で表示
+void numImage(int j, int i, String s) {
+  if (mapList[j][i] != 0) {
+    for (int k=0; k<s.length(); k++) {
+      char numk=s.charAt(k);
+      PImage NumberImage=loadImage("img/number_"+numk+".png");//数字の画像表示
+      image(NumberImage, (i+1)*100+98/s.length()*k, j*50+10, 98/s.length(), 48);//サイズと位置
     }
   }
 }
