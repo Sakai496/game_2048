@@ -2,12 +2,15 @@ import java.util.Arrays;
 int p;        //move(),sum(),keyPressed()で使用
 int q;        //move(),sum(),keyPressed()で使用
 int r;        //gameover(),writeMap()で使用
-int s;        //setup(),mousePressed(),keyPressed()で使用
+int u;        //setup(),mousePressed(),keyPressed()で使用
 int t;        //checkRetry()で使用
 int score;    //sum(),writeMap()で使用
 int[][] mapList;    //マップの状態を記録
 int[][] recordList;    //keyPressed()で使用
 int[][] tentativeList;    //keyPressed()で使用(仮のリスト)
+String s;     //drawMap()で使用
+
+// int[][] mapList = new int[4][4];    //4*4のマップを生成(要素はすべて0)
 
 //開始時のランダム生成とマップの表示
 void setup() {
@@ -25,16 +28,16 @@ void setup() {
   textSize(30);
   text("start", width/2, 260);
   textAlign(LEFT);
-  s = 0;      //ゲーム開始前の状態を記録(0:開始前、1:開始後)
+  u = 0;      //ゲーム開始前の状態を記録(0:開始前、1:開始後)
 }
 
 void draw() {
 }
 
 void mousePressed() {
-  if (mouseButton == LEFT && s == 0) {      //ゲーム開始前の状態
+  if (mouseButton == LEFT && u == 0) {      //ゲーム開始前の状態
     if (mouseX > 170 && mouseX < 330 && mouseY > 210 && mouseY < 290) {
-      s = 1;      //ゲーム開始後の状態を記録(0:開始前、1:開始後)
+      u = 1;      //ゲーム開始後の状態を記録(0:開始前、1:開始後)
       startGame();
     }
   }
@@ -52,7 +55,7 @@ void mousePressed() {
 
 //キー入力の処理
 void keyPressed() {
-  if (s == 0 || t == 1) {      //ゲーム開始前、リトライ確認中
+  if (u == 0 || t == 1) {      //ゲーム開始前、リトライ確認中
     return;     //キー入力を無視する
   }
   if (key == 'r' || key == 'R') {     //リトライが押された場合
@@ -151,7 +154,7 @@ void add2() {
   }
   while (count < 1) {      //2が生成されるまでループ
     if (mapList[shuffledList[m]/4][shuffledList[m]%4] == 0) {      //現在地が0なら
-      mapList[shuffledList[m]/4][shuffledList[m]%4] = 2;           //2を生成
+      mapList[shuffledList[m]/4][shuffledList[m]%4] = 2;      //2を生成
       count++;      //生成回数を記録
     }
     if (count == 0) {      //生成できていないなら
@@ -197,8 +200,9 @@ void writeMap() {
         fill(247);                       //背景の色を変える
       }
       rect(i*100+50, j*50+10, 98, 48);      //数ごとに背景を表示
+      numImage(j, i, s);                    //数を画像で表示
       fill(0);                               //数の色
-      text(s, i*100+50, (j+1)*50);          //数を表示
+      // text(s, i*100+50, (j+1)*50);          //数を表示
     }
   }
   textSize(20);
@@ -241,6 +245,17 @@ void loadMap(int[][] in, int[][] out) {
   for (int i = 0; i < 4; i++) {
     for (int j = 0; j < 4; j++) {
       in[j][i] = out[j][i];
+    }
+  }
+}
+
+//数字を画像で表示
+void numImage(int j, int i, String s) {
+  if (mapList[j][i] != 0) {
+    for (int k=0; k<s.length(); k++) {
+      char numk=s.charAt(k);
+      PImage NumberImage=loadImage("img/number_"+numk+".png");//数字の画像表示
+      image(NumberImage, (i+1)*100-50+98/s.length()*k, j*50+10, 98/s.length(), 48);//サイズと位置
     }
   }
 }
