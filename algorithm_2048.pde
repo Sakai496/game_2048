@@ -1,16 +1,16 @@
 import java.util.Arrays;
-int p;        //move(),sum(),keyPressed()で使用
-int q;        //move(),sum(),keyPressed()で使用
-int r;        //gameover(),writeMap()で使用
-int u;        //setup(),mousePressed(),keyPressed()で使用
-int t;        //checkRetry()で使用
+int keyInput;        //move(),sum(),keyPressed()で使用
+boolean isMoved;        //move(),sum(),keyPressed()で使用
+boolean isGameover;        //checkGameover(),writeMap()で使用
+boolean isStarted;        //setup(),mousePressed(),keyPressed()で使用
+boolean isRetry;        //keyPressed(),mousePressed(),checkRetry()で使用
 int score;    //sum(),writeMap()で使用
+int recordScore;    //keyPressed()で使用
+int tentativeScore;    //keyPressed()で使用
 int[][] mapList;    //マップの状態を記録
 int[][] recordList;    //keyPressed()で使用
 int[][] tentativeList;    //keyPressed()で使用(仮のリスト)
-String s;     //drawMap()で使用
-
-// int[][] mapList = new int[4][4];    //4*4のマップを生成(要素はすべて0)
+// String strMap;     //drawMap()で使用
 
 //開始時のランダム生成とマップの表示
 void setup() {
@@ -28,26 +28,26 @@ void setup() {
   textSize(30);
   text("start", width/2, 260);
   textAlign(LEFT);
-  u = 0;      //ゲーム開始前の状態を記録(0:開始前、1:開始後)
+  isStarted = true;      //ゲーム開始前の状態を記録
 }
 
 void draw() {
 }
 
 void mousePressed() {
-  if (mouseButton == LEFT && u == 0) {      //ゲーム開始前の状態
+  if (mouseButton == LEFT && isStarted) {      //ゲーム開始前の状態
     if (mouseX > 170 && mouseX < 330 && mouseY > 210 && mouseY < 290) {
-      u = 1;      //ゲーム開始後の状態を記録(0:開始前、1:開始後)
+      isStarted = false;      //ゲーム開始後の状態を記録
       startGame();
     }
   }
-  if (mouseButton == LEFT && t == 1) {      //リトライ確認中の状態
+  if (mouseButton == LEFT && isRetry) {      //リトライ確認中の状態
     if (mouseX > 70 && mouseX < 230 && mouseY > 120 && mouseY < 190) {      //いいえを選択した場合
-      t = 0;      //リトライ確認を終了
+      isRetry = false;      //リトライ確認を終了
       writeMap();
     }
     if (mouseX > 270 && mouseX < 430 && mouseY > 120 && mouseY < 190) {      //はいを選択した場合
-      t = 0;
+      isRetry = false;      //リトライ確認を終了
       startGame();
     }
   }
@@ -55,7 +55,7 @@ void mousePressed() {
 
 //キー入力の処理
 void keyPressed() {
-  if (u == 0 || t == 1) {      //ゲーム開始前、リトライ確認中
+  if (isStarted || isRetry) {      //ゲーム開始前、リトライ確認中
     return;     //キー入力を無視する
   }
   if (key == 'r' || key == 'R') {     //リトライが押された場合
@@ -65,62 +65,63 @@ void keyPressed() {
   if (key == 'z' || key == 'Z') {
     if (recordList != null) {
       loadMap(mapList, recordList);      //1つ前のマップを復元
-      gameover();
+      score = recordScore;      //1つ前のスコアを復元
+      checkGameover();
       writeMap();
     }
     return;
   }
   if (keyCode == UP) {
-    p = 0;
+    keyInput = 0;
   }
   if (keyCode == DOWN) {
-    p = 1;
+    keyInput = 1;
   }
   if (keyCode == LEFT) {
-    p = 2;
+    keyInput = 2;
   }
   if (keyCode == RIGHT) {
-    p = 3;
+    keyInput = 3;
   }
 
   loadMap(tentativeList, mapList);    //移動前のマップを記録
+  tentativeScore = score;    //移動前のスコアを記録
 
-  q = 0;      //移動回数を初期化(今回の入力で1回でも動いたかを記録)
+  isMoved = false;      //移動回数を初期化(今回の入力で1回でも動いたかを記録)
   for (int i = 0; i < 4; i++) {
     move(i);    //移動して
     sum(i);     //足して
     move(i);    //移動する
   }
-  if (q != 0) {        //一回でも動いたなら
+  if (isMoved) {        //一回でも動いたなら
     add2();
     loadMap(recordList, tentativeList);    //1つ前のマップを更新
+    recordScore =  tentativeScore;    //1つ前のスコアを更新
   }
-  gameover();
+  checkGameover();
   writeMap();
 }
 
 //0以外の数字を手前(移動方向)に寄せる処理(足し算はしない)
 void move(int i) {      //4回ループ
-  int n = 0;            //ずらした回数を記録(3回まで)
   for (int j = 0; j < 3; j++) {          //3回ループ(1番手前以外を参照)
-    int o = 0;          //j以降の数に0以外があるかを確認
+    int hasValue = 0;          //j以降の数に0以外があるかを確認
     for (int k = 0; k < 4-j; k++) {      //奥から手前にjまで確認
-      int[] listd = {3-k, k, i, i};      //x,y座標の指定
-      if (mapList[listd[p]][listd[(p+2)%4]] != 0) {      //0以外があったら((p+2)%4で2つずれる)
-        o = 1;
+      int[] frontList = {3-k, k, i, i};      //x,y座標の指定
+      if (mapList[frontList[keyInput]][frontList[(keyInput+2)%4]] != 0) {      //0以外があったら((keyInput+2)%4で2つずれる)
+        hasValue = 1;
       }
     }
-    int[] liste = {j, 3-j, i, i};      //縦軸と横軸の指定
-    while (mapList[liste[p]][liste[(p+2)%4]] == 0 && n < 3 && o != 0) {      //現在地が0で、奥に0でない数があれば
+    int[] zeroPointList = {j, 3-j, i, i};      //縦軸と横軸の指定
+    while (mapList[zeroPointList[keyInput]][zeroPointList[(keyInput+2)%4]] == 0 && hasValue != 0) {      //現在地が0で、奥に0でない数があれば
       for (int k = 0; k < 3-j; k++) {          //現在地より奥にあるマスの数だけループ
-        int[] listf = {k+j, 3-k-j, i, i};      //x,y座標の指定
-        int[] listg = {1+k+j, 2-k-j, i, i};    //移動方向の指定(手前から奥)
-        mapList[listf[p]][listf[(p+2)%4]] = mapList[listg[p]][listg[(p+2)%4]];      //一つ奥の値をコピー
+        int[] targetList = {k+j, 3-k-j, i, i};      //x,y座標の指定(コピー先)
+        int[] sourceList = {1+k+j, 2-k-j, i, i};    //移動方向の指定(手前から奥)(コピー元)
+        mapList[targetList[keyInput]][targetList[(keyInput+2)%4]] = mapList[sourceList[keyInput]][sourceList[(keyInput+2)%4]];      //一つ奥の値をコピー
       }
-      int[] listh = {3, 0, i, i};              //1番奥の座標を指定
-      mapList[listh[p]][listh[(p+2)%4]] = 0;
-      n += 1;      //ずらした回数を記録
-      q = 1;      //移動を記録(keyPressed()で使用)
+      int[] lastPointList = {3, 0, i, i};              //1番奥の座標を指定
+      mapList[lastPointList[keyInput]][lastPointList[(keyInput+2)%4]] = 0;
+      isMoved = true;      //移動を記録(keyPressed()で使用)
     }
   }
 }
@@ -128,21 +129,23 @@ void move(int i) {      //4回ループ
 //連続した同じ数を足す処理
 void sum(int i) {      //4回ループ
   for (int j = 0; j < 3; j++) {        // 3回ループ
-    int[] listi = {j, 3-j, i, i};      //x,y座標の指定
-    int[] listj = {1+j, 2-j, i, i};    //移動方向の指定(手前から奥)
-    if ((mapList[listi[p]][listi[(p+2)%4]] != 0)&&(mapList[listi[p]][listi[(p+2)%4]] == mapList[listj[p]][listj[(p+2)%4]])) {  //現在地が0でなく、次の数と値が等しいなら
-      mapList[listi[p]][listi[(p+2)%4]] *= 2;      //現在地を2倍
-      score += mapList[listi[p]][listi[(p+2)%4]];   //スコアに加算
-      mapList[listj[p]][listj[(p+2)%4]] = 0;       //次の数を0にする
-      q = 1;      //移動を記録(keyPressed()で使用)
+    int[] nowList = {j, 3-j, i, i};      //x,y座標の指定
+    int[] nextList = {1+j, 2-j, i, i};    //移動方向の指定(手前から奥)
+    if (mapList[nowList[keyInput]][nowList[(keyInput+2)%4]] != 0) {     //現在地が0でなく、
+      if (mapList[nowList[keyInput]][nowList[(keyInput+2)%4]] == mapList[nextList[keyInput]][nextList[(keyInput+2)%4]]) {  //次の数と値が等しいなら
+        mapList[nowList[keyInput]][nowList[(keyInput+2)%4]] *= 2;      //現在地を2倍
+        score += mapList[nowList[keyInput]][nowList[(keyInput+2)%4]];   //スコアに加算
+        mapList[nextList[keyInput]][nextList[(keyInput+2)%4]] = 0;       //次の数を0にする
+        isMoved = true;      //移動を記録(keyPressed()で使用)
+      }
     }
   }
 }
 
 //ランダムに2を生成する処理
 void add2() {
-  int count = 0;      //2の生成回数(1回だけにする)
-  int m = 0;          //シャッフル後リストの座標
+  int add2Count = 0;      //2の生成回数(1回だけにする)
+  int idx = 0;          //シャッフル後リストの座標
   StringList orderedList = new StringList();      //空の文字列リスト
   for (int i = 0; i < 16; i++) {            //0から15まで追加
     orderedList.append(str(i));
@@ -152,32 +155,32 @@ void add2() {
   for (int i = 0; i < 16; i++) {
     shuffledList[i] = Integer.parseInt(orderedList.get(i));      //シャッフル後の数列を取得
   }
-  while (count < 1) {      //2が生成されるまでループ
-    if (mapList[shuffledList[m]/4][shuffledList[m]%4] == 0) {      //現在地が0なら
-      mapList[shuffledList[m]/4][shuffledList[m]%4] = 2;      //2を生成
-      count++;      //生成回数を記録
+  while (add2Count < 1) {      //2が生成されるまでループ
+    if (mapList[shuffledList[idx]/4][shuffledList[idx]%4] == 0) {      //現在地が0なら
+      mapList[shuffledList[idx]/4][shuffledList[idx]%4] = 2;      //2を生成
+      add2Count++;      //生成回数を記録
     }
-    if (count == 0) {      //生成できていないなら
-      m++;                 //次の座標を指定
+    if (add2Count == 0) {      //生成できていないなら
+      idx++;                 //次の座標を指定
     }
   }
 }
 
 //動かせなくなったかの確認(0があれば動かせる、連続した同じ数があれば動かせる)
-void gameover() {
-  r = 0;
+void checkGameover() {
+  isGameover = false;
   for (int i = 0; i < 4; i++) {
     for (int j = 0; j < 4; j++) {
       if (mapList[j][i] == 0) {
-        r = 1;
+        isGameover = false;
       }
     }
     for (int j = 0; j < 3; j++) {
       if (mapList[j][i] == mapList[j+1][i]) {
-        r = 1;
+        isGameover = false;
       }
       if (mapList[i][j] == mapList[i][j+1]) {
-        r = 1;
+        isGameover = false;
       }
     }
   }
@@ -187,22 +190,22 @@ void gameover() {
 void writeMap() {
   background(255);
   textSize(50);
-  if (r == 0) {                       //動かせなくなったら
+  if (isGameover) {                       //動かせなくなったら
     background(255, 80, 30);
     text("Game Over", 190, 350);      //テキスト表示
   }
   for (int i = 0; i < 4; i++) {
     for (int j = 0; j < 4; j++) {
-      String s = str(mapList[j][i]);     //現在地の数を記録
+      String strMap = str(mapList[j][i]);     //現在地の数を記録
       fill(250);                         //背景の色
       if (mapList[j][i] == 0) {          //現在地が0なら
-        s = " ";                         //空白にして
+        strMap = " ";                         //空白にして
         fill(247);                       //背景の色を変える
       }
       rect(i*100+50, j*50+10, 98, 48);      //数ごとに背景を表示
-      numImage(j, i, s);                    //数を画像で表示
+      numImage(j, i, strMap);                    //数を画像で表示
       fill(0);                               //数の色
-      // text(s, i*100+50, (j+1)*50);          //数を表示
+      // text(strMap, i*100+50, (j+1)*50);          //数を表示
     }
   }
   textSize(20);
@@ -221,7 +224,8 @@ void startGame() {
     add2();
   }
   loadMap(recordList, mapList);    //開始前のマップを記録
-  gameover();
+  recordScore = score;    //開始前のスコアを記録
+  checkGameover();
   writeMap();
 }
 
@@ -237,7 +241,7 @@ void checkRetry() {
   text("本当にリトライしますか？", 130, 100);
   text("いいえ", 120, 160);
   text("はい", 330, 160);
-  t = 1;      //リトライ確認中の状態にする
+  isRetry = true;      //リトライ確認中の状態にする
 }
 
 //マップの状態をコピーする処理
@@ -248,6 +252,7 @@ void loadMap(int[][] in, int[][] out) {
     }
   }
 }
+
 
 //数字を画像で表示
 void numImage(int j, int i, String s) {
