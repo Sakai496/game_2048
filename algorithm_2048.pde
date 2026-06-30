@@ -9,6 +9,9 @@ int[][] mapList;    //マップの状態を記録
 int[][] recordList;    //keyPressed()で使用
 int[][] tentativeList;    //keyPressed()で使用(仮のリスト)
 String s;     //drawMap()で使用
+int backImgNum=1;
+int n = 0;            //ずらした回数を記録(3回まで)
+
 
 // int[][] mapList = new int[4][4];    //4*4のマップを生成(要素はすべて0)
 
@@ -17,7 +20,14 @@ void setup() {
   size(500, 400);
   PFont font = createFont("Meiryo", 50);
   textFont(font);
-  background(255);
+  background(255);   
+  startScene();
+}
+
+void draw() {
+}
+
+void startScene(){
   fill(200, 200, 255);
   noStroke();
   rect(170, 210, 160, 80);
@@ -31,15 +41,12 @@ void setup() {
   u = 0;      //ゲーム開始前の状態を記録(0:開始前、1:開始後)
 }
 
-void draw() {
-}
-
 void mousePressed() {
   if (mouseButton == LEFT && u == 0) {      //ゲーム開始前の状態
     if (mouseX > 170 && mouseX < 330 && mouseY > 210 && mouseY < 290) {
       u = 1;      //ゲーム開始後の状態を記録(0:開始前、1:開始後)
       startGame();
-    }
+    }   
   }
   if (mouseButton == LEFT && t == 1) {      //リトライ確認中の状態
     if (mouseX > 70 && mouseX < 230 && mouseY > 120 && mouseY < 190) {      //いいえを選択した場合
@@ -64,7 +71,7 @@ void keyPressed() {
   }
   if (key == 'z' || key == 'Z') {
     if (recordList != null) {
-      loadMap(mapList, recordList);      //1つ前のマップを復元
+      loadMap(mapList, recordList);//1つ前のマップを復元
       gameover();
       writeMap();
     }
@@ -101,8 +108,7 @@ void keyPressed() {
 
 //0以外の数字を手前(移動方向)に寄せる処理(足し算はしない)
 void move(int i) {      //4回ループ
-  int n = 0;            //ずらした回数を記録(3回まで)
-  for (int j = 0; j < 3; j++) {          //3回ループ(1番手前以外を参照)
+    for (int j = 0; j < 3; j++) {          //3回ループ(1番手前以外を参照)
     int o = 0;          //j以降の数に0以外があるかを確認
     for (int k = 0; k < 4-j; k++) {      //奥から手前にjまで確認
       int[] listd = {3-k, k, i, i};      //x,y座標の指定
@@ -200,6 +206,7 @@ void writeMap() {
         fill(247);                       //背景の色を変える
       }
       rect(i*100+50, j*50+10, 98, 48);      //数ごとに背景を表示
+      backgroundImage(j,i);                    //背景画像を表示
       numImage(j, i, s);                    //数を画像で表示
       fill(0);                               //数の色
       // text(s, i*100+50, (j+1)*50);          //数を表示
@@ -254,8 +261,19 @@ void numImage(int j, int i, String s) {
   if (mapList[j][i] != 0) {
     for (int k=0; k<s.length(); k++) {
       char numk=s.charAt(k);
-      PImage NumberImage=loadImage("img/number_"+numk+".png");//数字の画像表示
+      PImage NumberImage=loadImage("number_"+numk+"_B.png");//数字の画像表示
       image(NumberImage, (i+1)*100-50+98/s.length()*k, j*50+10, 98/s.length(), 48);//サイズと位置
     }
   }
 }
+
+//背景を画像で表示
+void backgroundImage(int j,int i){
+  if (mapList[j][i] != 0) {
+      tint(#823809);//画像全体に色付け
+      PImage backImg=loadImage("background_1.png");
+      image(backImg, i*100+50, j*50+8, 100, 50);//サイズと位置
+      noTint();//色付け終了
+  }
+}
+
