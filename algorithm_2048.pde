@@ -11,6 +11,7 @@ int[][] mapList;    //マップの状態を記録
 int[][] recordList;    //keyPressed()で使用
 int[][] tentativeList;    //keyPressed()で使用(仮のリスト)
 // String strMap;     //drawMap()で使用
+IntList moveCellList = new IntList();    //keyPressed()で使用
 
 //開始時のランダム生成とマップの表示
 void setup() {
@@ -84,16 +85,17 @@ void keyPressed() {
     keyInput = 3;
   }
 
+  moveCellList = new IntList(0, 0);    //移動したマスの座標を記録するリストを初期化
   loadMap(tentativeList, mapList);    //移動前のマップを記録
   tentativeScore = score;    //移動前のスコアを記録
 
   isMoved = false;      //移動回数を初期化(今回の入力で1回でも動いたかを記録)
   for (int i = 0; i < 4; i++) {
-    move(i);    //移動して
-    sum(i);     //足して
-    move(i);    //移動する
+    run(i);    //移動する
   }
   if (isMoved) {        //一回でも動いたなら
+    moveCellList.remove(0);
+    moveCellList.remove(0);
     add2();
     loadMap(recordList, tentativeList);    //1つ前のマップを更新
     recordScore =  tentativeScore;    //1つ前のスコアを更新
@@ -102,41 +104,33 @@ void keyPressed() {
   writeMap();
 }
 
-//0以外の数字を手前(移動方向)に寄せる処理(足し算はしない)
-void move(int i) {      //4回ループ
-  for (int j = 0; j < 3; j++) {          //3回ループ(1番手前以外を参照)
-    int hasValue = 0;          //j以降の数に0以外があるかを確認
-    for (int k = 0; k < 4-j; k++) {      //奥から手前にjまで確認
-      int[] frontList = {3-k, k, i, i};      //x,y座標の指定
-      if (mapList[frontList[keyInput]][frontList[(keyInput+2)%4]] != 0) {      //0以外があったら((keyInput+2)%4で2つずれる)
-        hasValue = 1;
-      }
-    }
-    int[] zeroPointList = {j, 3-j, i, i};      //縦軸と横軸の指定
-    while (mapList[zeroPointList[keyInput]][zeroPointList[(keyInput+2)%4]] == 0 && hasValue != 0) {      //現在地が0で、奥に0でない数があれば
-      for (int k = 0; k < 3-j; k++) {          //現在地より奥にあるマスの数だけループ
-        int[] targetList = {k+j, 3-k-j, i, i};      //x,y座標の指定(コピー先)
-        int[] sourceList = {1+k+j, 2-k-j, i, i};    //移動方向の指定(手前から奥)(コピー元)
-        mapList[targetList[keyInput]][targetList[(keyInput+2)%4]] = mapList[sourceList[keyInput]][sourceList[(keyInput+2)%4]];      //一つ奥の値をコピー
-      }
-      int[] lastPointList = {3, 0, i, i};              //1番奥の座標を指定
-      mapList[lastPointList[keyInput]][lastPointList[(keyInput+2)%4]] = 0;
-      isMoved = true;      //移動を記録(keyPressed()で使用)
-    }
-  }
-}
 
-//連続した同じ数を足す処理
-void sum(int i) {      //4回ループ
-  for (int j = 0; j < 3; j++) {        // 3回ループ
-    int[] nowList = {j, 3-j, i, i};      //x,y座標の指定
-    int[] nextList = {1+j, 2-j, i, i};    //移動方向の指定(手前から奥)
-    if (mapList[nowList[keyInput]][nowList[(keyInput+2)%4]] != 0) {     //現在地が0でなく、
-      if (mapList[nowList[keyInput]][nowList[(keyInput+2)%4]] == mapList[nextList[keyInput]][nextList[(keyInput+2)%4]]) {  //次の数と値が等しいなら
-        mapList[nowList[keyInput]][nowList[(keyInput+2)%4]] *= 2;      //現在地を2倍
-        score += mapList[nowList[keyInput]][nowList[(keyInput+2)%4]];   //スコアに加算
-        mapList[nextList[keyInput]][nextList[(keyInput+2)%4]] = 0;       //次の数を0にする
-        isMoved = true;      //移動を記録(keyPressed()で使用)
+void run(int i) {
+  int n = 0;
+  int sumPoint = -1;
+  for (int j = 0; j < 4; j++) {
+    int[] zeroPointList = {j, 3-j, i, i};
+    int[] afterPointList = {n, 3-n, i, i};
+    int[] nextPointList = {n-1, 4-n, i, i};
+    if (mapList[zeroPointList[keyInput]][zeroPointList[(keyInput+2)%4]] != 0) {
+      int m = mapList[zeroPointList[keyInput]][zeroPointList[(keyInput+2)%4]];
+      mapList[zeroPointList[keyInput]][zeroPointList[(keyInput+2)%4]] = 0;
+      mapList[afterPointList[keyInput]][afterPointList[(keyInput+2)%4]] = m;
+      if (n > 0 && sumPoint != n && mapList[afterPointList[keyInput]][afterPointList[(keyInput+2)%4]] == mapList[nextPointList[keyInput]][nextPointList[(keyInput+2)%4]]) {
+        mapList[nextPointList[keyInput]][nextPointList[(keyInput+2)%4]] *= 2;
+        score += mapList[nextPointList[keyInput]][nextPointList[(keyInput+2)%4]];
+        mapList[afterPointList[keyInput]][afterPointList[(keyInput+2)%4]] = 0;
+        sumPoint = n;
+        isMoved = true;
+        moveCellList.append(afterPointList[keyInput] - zeroPointList[keyInput]);
+        moveCellList.append(afterPointList[(keyInput+2)%4] - zeroPointList[(keyInput+2)%4]);
+      } else {
+        if (j != n) {
+          isMoved = true;      //移動を記録(keyPressed()で使用)
+          moveCellList.append(afterPointList[keyInput] - zeroPointList[keyInput]);
+          moveCellList.append(afterPointList[(keyInput+2)%4] - zeroPointList[(keyInput+2)%4]);
+        }
+        n++;
       }
     }
   }
@@ -168,7 +162,7 @@ void add2() {
 
 //動かせなくなったかの確認(0があれば動かせる、連続した同じ数があれば動かせる)
 void checkGameover() {
-  isGameover = false;
+  isGameover = true;      //動かせない状態を記録
   for (int i = 0; i < 4; i++) {
     for (int j = 0; j < 4; j++) {
       if (mapList[j][i] == 0) {
@@ -197,15 +191,15 @@ void writeMap() {
   for (int i = 0; i < 4; i++) {
     for (int j = 0; j < 4; j++) {
       String strMap = str(mapList[j][i]);     //現在地の数を記録
-      fill(250);                         //背景の色
+      fill(247);
       if (mapList[j][i] == 0) {          //現在地が0なら
         strMap = " ";                         //空白にして
-        fill(247);                       //背景の色を変える
+        fill(245);
       }
-      rect(i*100+50, j*50+10, 98, 48);      //数ごとに背景を表示
-      numImage(j, i, strMap);                    //数を画像で表示
-      fill(0);                               //数の色
-      // text(strMap, i*100+50, (j+1)*50);          //数を表示
+      rect(i*100+50, j*50+10, 98, 48);    //マスの表示
+      numImage(j, i, strMap);           //数を画像で表示
+      fill(0);                                //数の色
+      // text(strMap, i*100+50, (j+1)*50);    //数を表示
     }
   }
   textSize(20);
@@ -219,6 +213,7 @@ void startGame() {
   mapList = new int[4][4];    //4*4のマップを生成(要素はすべて0)
   recordList = new int[4][4]; //1つ前のマップを記録するリストを生成
   tentativeList = new int[4][4];  //recordListの仮のリストを生成
+  moveCellList = new IntList(0, 0);    //移動したマスの座標を記録するリストを初期化
   score = 0;
   for (int i = 0; i < 2; i++) {      //2つ生成
     add2();
@@ -262,5 +257,15 @@ void numImage(int j, int i, String s) {
       PImage NumberImage=loadImage("img/number_"+numk+".png");//数字の画像表示
       image(NumberImage, (i+1)*100-50+98/s.length()*k, j*50+10, 98/s.length(), 48);//サイズと位置
     }
+  }
+}
+
+//背景を画像で表示
+void backgroundImage(int j, int i) {
+  if (mapList[j][i] != 0) {
+    tint(#823809);//画像全体に色付け
+    PImage backImg=loadImage("background_1.png");
+    image(backImg, i*100+50, j*50+8, 100, 50);//サイズと位置
+    noTint();//色付け終了
   }
 }
