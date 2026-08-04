@@ -12,6 +12,8 @@ int[][] recordList;    //keyPressed()で使用
 int[][] tentativeList;    //keyPressed()で使用(仮のリスト)
 // String strMap;     //drawMap()で使用
 IntList moveCellList = new IntList();    //keyPressed()で使用
+String numImage = "A";    //数字の画像を変更するための変数
+boolean colorChangeFunction = false;    //数字の画像を変更するための変数
 
 //開始時のランダム生成とマップの表示
 void setup() {
@@ -21,13 +23,16 @@ void setup() {
   background(255);
   fill(200, 200, 255);
   noStroke();
-  rect(170, 210, 160, 80);
+  rect(170, 210, 160, 80);//スタートボタン
+  rect(30, 210, 90, 80);//文字画像変えるボタン
   textSize(80);
   fill(0);
   textAlign(CENTER);
   text("2048", width/2, 150);
   textSize(30);
   text("start", width/2, 260);
+  textSize(20);
+  text( "数字変更", 75, 260);
   textAlign(LEFT);
   isStarted = true;      //ゲーム開始前の状態を記録
 }
@@ -37,11 +42,18 @@ void draw() {
 
 void mousePressed() {
   if (mouseButton == LEFT && isStarted) {      //ゲーム開始前の状態
+    if (mouseX > 30 && mouseX < 120 && mouseY > 210 && mouseY < 290) {
+      colorChangeFunction=true;
+    }
+    colorChange();
     if (mouseX > 170 && mouseX < 330 && mouseY > 210 && mouseY < 290) {
       isStarted = false;      //ゲーム開始後の状態を記録
       startGame();
     }
+  } else {
+    returnToStart();
   }
+
   if (mouseButton == LEFT && isRetry) {      //リトライ確認中の状態
     if (mouseX > 70 && mouseX < 230 && mouseY > 120 && mouseY < 190) {      //いいえを選択した場合
       isRetry = false;      //リトライ確認を終了
@@ -204,9 +216,13 @@ void writeMap() {
     }
   }
   textSize(20);
+  textAlign(LEFT);
   text("スコア：" + score, 20, 250);    //スコアのテキスト
   text("リトライ：Rキー", 20, 280);    //リトライのテキスト
   text("一回戻す：Zキー", 20, 310);    //一回戻すのテキスト
+  rect(10, 315, 200, 40);//スタート画面に戻るのボタン
+  fill(255);//文字色を白に変更
+  text("スタート画面に戻る", 20, 340);//スタート画面に戻るのテキスト
 }
 
 //ゲームの初期化
@@ -249,13 +265,12 @@ void loadMap(int[][] in, int[][] out) {
   }
 }
 
-
 //数字を画像で表示
 void numImage(int j, int i, String s) {
   if (mapList[j][i] != 0) {
     for (int k=0; k<s.length(); k++) {
       char numk=s.charAt(k);
-      PImage NumberImage=loadImage("img/number_"+numk+"_B.png");//数字の画像表示
+      PImage NumberImage=loadImage("img/number_"+numk+"_"+numImage+".png");//数字の画像表示
       image(NumberImage, (i+1)*100-50+98/s.length()*k, j*50+10, 98/s.length(), 48);//サイズと位置
     }
   }
@@ -268,5 +283,40 @@ void backgroundImage(int j, int i) {
     PImage backImg=loadImage("img/background_1.png");
     image(backImg, i*100+50, j*50+8, 100, 50);//サイズと位置
     noTint();//色付け終了
+  }
+}
+
+//rect(30, 210, 90, 80);//文字画像変えるボタンを押したときの処理
+void colorChange() {
+  if (colorChangeFunction) {
+    //スタートボタンを設置
+    background(255);
+    fill(0);
+    rect(170, 210, 160, 80);//スタートボタンの四角
+    textSize(30);
+    fill(255);
+    textAlign(CENTER);
+    text("start", width/2, 260);
+    //数字の画像変更用のイメージを表示
+    PImage numA=loadImage("img/number_0_A.png");//Aの数字の画像表示
+    image(numA, 30, 100, 90, 80);
+    PImage numB=loadImage("img/number_0_B.png");//Bの数字の画像表示
+    image(numB, 150, 100, 90, 80);
+    if (mousePressed) {
+      if (mouseX > 30 && mouseX < 120 && mouseY > 100 && mouseY < 180) {
+        numImage="A";//Aの数字の画像に変更
+      }
+      if (mouseX > 150 && mouseX < 240 && mouseY > 100 && mouseY < 180) {
+        numImage="B";//Bの数字の画像に変更
+      }
+    }
+  }
+}
+
+//rect(10, 315, 200, 40);//スタート画面に戻るのボタン
+void returnToStart() {
+  if (mouseX > 10 && mouseX < 210 && mouseY > 315 && mouseY < 355 && isStarted==false) {
+    setup();
+    isStarted = true;      //ゲーム開始前の状態を記録
   }
 }
