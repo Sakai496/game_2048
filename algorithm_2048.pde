@@ -197,6 +197,7 @@ void writeMap() {
         fill(245);
       }
       rect(i*100+50, j*50+10, 98, 48);    //マスの表示
+      backgroundImage(j, i);           //背景を画像で表示
       numImage(j, i, strMap);           //数を画像で表示
       fill(0);                                //数の色
       // text(strMap, i*100+50, (j+1)*50);    //数を表示
@@ -254,7 +255,7 @@ void numImage(int j, int i, String s) {
   if (mapList[j][i] != 0) {
     for (int k=0; k<s.length(); k++) {
       char numk=s.charAt(k);
-      PImage NumberImage=loadImage("img/number_"+numk+".png");//数字の画像表示
+      PImage NumberImage=loadImage("img/number_"+numk+"_B.png");//数字の画像表示
       image(NumberImage, (i+1)*100-50+98/s.length()*k, j*50+10, 98/s.length(), 48);//サイズと位置
     }
   }
@@ -264,7 +265,7 @@ void numImage(int j, int i, String s) {
 void backgroundImage(int j, int i) {
   if (mapList[j][i] != 0) {
     tint(#823809);//画像全体に色付け
-    PImage backImg=loadImage("background_1.png");
+    PImage backImg=loadImage("img/background_1.png");
     image(backImg, i*100+50, j*50+8, 100, 50);//サイズと位置
     noTint();//色付け終了
   }
