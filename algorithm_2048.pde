@@ -168,7 +168,7 @@ void add2() {
 
 //動かせなくなったかの確認(0があれば動かせる、連続した同じ数があれば動かせる)
 void checkGameover() {
-  isGameover = false;
+  isGameover = true;
   for (int i = 0; i < 4; i++) {
     for (int j = 0; j < 4; j++) {
       if (mapList[j][i] == 0) {
@@ -197,12 +197,15 @@ void writeMap() {
   for (int i = 0; i < 4; i++) {
     for (int j = 0; j < 4; j++) {
       String strMap = str(mapList[j][i]);     //現在地の数を記録
-      fill(250);                         //背景の色
+      fill(240);                         //背景の色
       if (mapList[j][i] == 0) {          //現在地が0なら
         strMap = " ";                         //空白にして
-        fill(247);                       //背景の色を変える
       }
-      rect(i*100+50, j*50+10, 98, 48);      //数ごとに背景を表示
+      
+      PImage choko;
+        choko = loadImage("img/スクリーンショット 2026-07-03 143303.png");
+            image(choko, i*100+50, j*50+10, 100, 50);   //チョコを表示させる
+
       numImage(j, i, strMap);                    //数を画像で表示
       fill(0);                               //数の色
       // text(strMap, i*100+50, (j+1)*50);          //数を表示
@@ -252,6 +255,8 @@ void loadMap(int[][] in, int[][] out) {
     }
   }
 }
+
+
 
 
 //数字を画像で表示
