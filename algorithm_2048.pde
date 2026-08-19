@@ -24,32 +24,31 @@ void setup() {
   background(255);
   fill(200, 200, 255);
   noStroke();
-  rect(170, 210, 160, 80);//スタートボタン
-  rect(30, 210, 90, 80);//文字画像変えるボタン
-  rect(380, 210, 90, 80);//チュートリアルのボタン
+  PImage gameStart =loadImage("img/gameStart_button.png");
+  image(gameStart, 170, 210, 160, 80);//スタートボタン
+  PImage letterChange=loadImage("img/letterChange_button.png");//文字の背景
+  image(letterChange, 30, 210, 100, 80);
+  PImage tutorial =loadImage("img/tutorial_button.png");
+  image(tutorial, 380, 210, 100, 80);//チュートリアルのボタン
   textSize(80);
   fill(0);
   textAlign(CENTER);
   text("2048", width/2, 150);
   textSize(30);
-  text("start", width/2, 260);
   textSize(20);
-  text( "数字変更", 75, 260);
-  text( "遊び方", 425, 260);
   textAlign(LEFT);
   mode=0;//スタート画面
   isStarted = true;      //ゲーム開始前の状態を記録
 }
-
 void draw() {
 }
 
 void mousePressed() {
   if (mouseButton == LEFT && isStarted) {      //ゲーム開始前の状態
-    if (mode==0 && mouseX > 380 && mouseX < 470 && mouseY > 210 && mouseY < 290) {
+    if (mode==0 && mouseX > 380 && mouseX < 480 && mouseY > 210 && mouseY < 290) {
       mode=4;//チュートリアルの画面に移動
     }
-    if (mode==0 && mouseX > 30 && mouseX < 120 && mouseY > 210 && mouseY < 290) {
+    if (mode==0 && mouseX > 30 && mouseX < 130 && mouseY > 210 && mouseY < 290) {
       mode=3;//数字の画像を変更する画面に移動
     }
     lecture();
@@ -236,13 +235,17 @@ void writeMap() {
   text("スコア：" + score, 20, 250);    //スコアのテキスト
   text("リトライ：Rキー", 20, 280);    //リトライのテキスト
   text("一回戻す：Zキー", 20, 310);    //一回戻すのテキスト
-  rect(10, 315, 200, 40);//スタート画面に戻るのボタン
-  fill(255);//文字色を白に変更
-  text("スタート画面に戻る", 20, 340);//スタート画面に戻るのテキスト
-  fill(0);
-  rect(10, 360, 200, 35);
-  fill(255);//文字色を白に変更
-  text("ゲームオーバー", 20, 385);//ゲームオーバーに行くテキスト
+  //rect(10, 315, 200, 40);//スタート画面に戻るのボタン
+  //fill(255);//文字色を白に変更
+  PImage back =loadImage("img/backToStart_button.png");
+  image(back, 10, 315, 200, 40);//スタート画面に戻る
+  //text("スタート画面に戻る", 20, 340);//スタート画面に戻るのテキスト
+  //fill(0);4
+  PImage gameOver =loadImage("img/gameOver_button.png");
+  image(gameOver, 10, 360, 200, 35);//ゲームオーバー
+  //rect(10, 360, 200, 35);
+  //fill(255);//文字色を白に変更
+  //text("ゲームオーバー", 20, 385);//ゲームオーバーに行くテキスト
 }
 
 //ゲームの初期化
@@ -310,20 +313,20 @@ void colorChange() {
     //スタートボタンを設置
     background(255);
     fill(0);
-    rect(170, 210, 160, 80);//スタートボタンの四角
-    rect(30, 300, 90, 80);//戻るボタンの四角
+    PImage gameStart =loadImage("img/gameStart_button.png");
+    image(gameStart, 170, 210, 160, 80);//スタートボタンの四角
+    PImage back =loadImage("img/back_button.png");
+    image(back, 30, 300, 90, 60);//戻るボタンの四角
     textSize(30);
     fill(255);
     textAlign(CENTER);
-    text("start", width/2, 260);
-    text("戻る", 75, 350);
     //数字の画像変更用のイメージを表示
     PImage numA=loadImage("img/number_0_A.png");//Aの数字の画像表示
     image(numA, 30, 100, 90, 80);
     PImage numB=loadImage("img/number_0_B.png");//Bの数字の画像表示
     image(numB, 150, 100, 90, 80);
     if (mousePressed) {
-      if (mouseX > 30&&mouseX < 120 && mouseY > 300&&mouseY < 380) {//戻るボタンを押したときの処理
+      if (mouseX > 30&&mouseX < 140 && mouseY > 300&&mouseY < 380) {//戻るボタンを押したときの処理
         setup();
         mode=0;//スタート画面に戻る
       }
@@ -362,16 +365,16 @@ void lecture() {
     text("2048を作るとクリアです。", 20, 110);
     text("リトライはRキー、一回戻すのはZキーです。", 20, 140);
     //スタートボタンと戻るボタンの四角を設置
-    rect(170, 210, 160, 80);//スタートボタンの四角
-    rect(30, 300, 90, 80);//戻るボタンの四角
+    PImage back =loadImage("img/back_button.png");
+    image(back, 30, 300, 110, 80);//戻るボタンの四角
+    PImage gameStart =loadImage("img/gameStart_button.png");
+    image(gameStart, 170, 210, 160, 80);//スタートボタンの四角
     textSize(30);
     fill(255);
     textAlign(CENTER);
-    text("start", width/2, 260);
-    text("戻る", 75, 350);
 
     if (mousePressed) {
-      if (mouseX > 30 &&mouseX < 120 && mouseY > 300 && mouseY < 380) {
+      if (mouseX > 30 &&mouseX < 140 && mouseY > 300 && mouseY < 380) {
         setup();
         mode=0;
       }
