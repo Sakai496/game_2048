@@ -14,6 +14,8 @@ int[][] tentativeList;    //keyPressed()で使用(仮のリスト)
 IntList moveCellList = new IntList();    //keyPressed()で使用
 String numImage = "A";    //数字の画像を変更するための変数
 boolean colorChangeFunction = false;    //数字の画像を変更するための変数
+boolean gameOvermode= false;//簡単にゲームオーバー画面を表示するため
+int mode=0;//画面を管理するための変数(0:スタート画面、1:ゲーム画面、2:ゲームオーバー画面、3:数字変更画面,4:チュートリアル画面)
 
 //開始時のランダム生成とマップの表示
 void setup() {
@@ -25,6 +27,7 @@ void setup() {
   noStroke();
   rect(170, 210, 160, 80);//スタートボタン
   rect(30, 210, 90, 80);//文字画像変えるボタン
+  rect(380, 210, 90, 80);//チュートリアルのボタン
   textSize(80);
   fill(0);
   textAlign(CENTER);
@@ -33,7 +36,9 @@ void setup() {
   text("start", width/2, 260);
   textSize(20);
   text( "数字変更", 75, 260);
+  text( "遊び方", 425, 260);
   textAlign(LEFT);
+  mode=0;//スタート画面
   isStarted = true;      //ゲーム開始前の状態を記録
 }
 
@@ -42,12 +47,17 @@ void draw() {
 
 void mousePressed() {
   if (mouseButton == LEFT && isStarted) {      //ゲーム開始前の状態
-    if (mouseX > 30 && mouseX < 120 && mouseY > 210 && mouseY < 290) {
-      colorChangeFunction=true;
+    if (mode==0 && mouseX > 380 && mouseX < 470 && mouseY > 210 && mouseY < 290) {
+      mode=4;//チュートリアルの画面に移動
     }
+    if (mode==0 && mouseX > 30 && mouseX < 120 && mouseY > 210 && mouseY < 290) {
+      mode=3;//数字の画像を変更する画面に移動
+    }
+    lecture();
     colorChange();
-    if (mouseX > 170 && mouseX < 330 && mouseY > 210 && mouseY < 290) {
+    if ( mouseX > 170 && mouseX < 330 && mouseY > 210 && mouseY < 290) {
       isStarted = false;      //ゲーム開始後の状態を記録
+      mode=1;
       startGame();
     }
   } else {
@@ -102,9 +112,7 @@ void keyPressed() {
   tentativeScore = score;    //移動前のスコアを記録
 
   isMoved = false;      //移動回数を初期化(今回の入力で1回でも動いたかを記録)
-  for (int i = 0; i < 4; i++) {
-    run(i);    //移動する
-  }
+  run();    //移動する
   if (isMoved) {        //一回でも動いたなら
     moveCellList.remove(0);
     moveCellList.remove(0);
@@ -117,32 +125,34 @@ void keyPressed() {
 }
 
 
-void run(int i) {
-  int n = 0;
-  int sumPoint = -1;
-  for (int j = 0; j < 4; j++) {
-    int[] zeroPointList = {j, 3-j, i, i};
-    int[] afterPointList = {n, 3-n, i, i};
-    int[] nextPointList = {n-1, 4-n, i, i};
-    if (mapList[zeroPointList[keyInput]][zeroPointList[(keyInput+2)%4]] != 0) {
-      int m = mapList[zeroPointList[keyInput]][zeroPointList[(keyInput+2)%4]];
-      mapList[zeroPointList[keyInput]][zeroPointList[(keyInput+2)%4]] = 0;
-      mapList[afterPointList[keyInput]][afterPointList[(keyInput+2)%4]] = m;
-      if (n > 0 && sumPoint != n && mapList[afterPointList[keyInput]][afterPointList[(keyInput+2)%4]] == mapList[nextPointList[keyInput]][nextPointList[(keyInput+2)%4]]) {
-        mapList[nextPointList[keyInput]][nextPointList[(keyInput+2)%4]] *= 2;
-        score += mapList[nextPointList[keyInput]][nextPointList[(keyInput+2)%4]];
-        mapList[afterPointList[keyInput]][afterPointList[(keyInput+2)%4]] = 0;
-        sumPoint = n;
-        isMoved = true;
-        moveCellList.append(afterPointList[keyInput] - zeroPointList[keyInput]);
-        moveCellList.append(afterPointList[(keyInput+2)%4] - zeroPointList[(keyInput+2)%4]);
-      } else {
-        if (j != n) {
-          isMoved = true;      //移動を記録(keyPressed()で使用)
+void run() {
+  for (int i = 0; i < 4; i++) {
+    int n = 0;
+    int sumPoint = -1;
+    for (int j = 0; j < 4; j++) {
+      int[] zeroPointList = {j, 3-j, i, i};
+      int[] afterPointList = {n, 3-n, i, i};
+      int[] nextPointList = {n-1, 4-n, i, i};
+      if (mapList[zeroPointList[keyInput]][zeroPointList[(keyInput+2)%4]] != 0) {
+        int m = mapList[zeroPointList[keyInput]][zeroPointList[(keyInput+2)%4]];
+        mapList[zeroPointList[keyInput]][zeroPointList[(keyInput+2)%4]] = 0;
+        mapList[afterPointList[keyInput]][afterPointList[(keyInput+2)%4]] = m;
+        if (n > 0 && sumPoint != n && mapList[afterPointList[keyInput]][afterPointList[(keyInput+2)%4]] == mapList[nextPointList[keyInput]][nextPointList[(keyInput+2)%4]]) {
+          mapList[nextPointList[keyInput]][nextPointList[(keyInput+2)%4]] *= 2;
+          score += mapList[nextPointList[keyInput]][nextPointList[(keyInput+2)%4]];
+          mapList[afterPointList[keyInput]][afterPointList[(keyInput+2)%4]] = 0;
+          sumPoint = n;
+          isMoved = true;
           moveCellList.append(afterPointList[keyInput] - zeroPointList[keyInput]);
           moveCellList.append(afterPointList[(keyInput+2)%4] - zeroPointList[(keyInput+2)%4]);
+        } else {
+          if (j != n) {
+            isMoved = true;      //移動を記録(keyPressed()で使用)
+            moveCellList.append(afterPointList[keyInput] - zeroPointList[keyInput]);
+            moveCellList.append(afterPointList[(keyInput+2)%4] - zeroPointList[(keyInput+2)%4]);
+          }
+          n++;
         }
-        n++;
       }
     }
   }
@@ -192,11 +202,11 @@ void checkGameover() {
   }
 }
 
-//マップ、ゲームオーバー、スコアの表示
+//ゲーム画面の表示設定（マップ、ゲームオーバー、スコアの表示）
 void writeMap() {
   background(255);
   textSize(50);
-  if (isGameover) {                       //動かせなくなったら
+  if (isGameover||gameOvermode) {                       //動かせなくなったら
     background(255, 80, 30);
     text("Game Over", 190, 350);      //テキスト表示
   }
@@ -223,6 +233,10 @@ void writeMap() {
   rect(10, 315, 200, 40);//スタート画面に戻るのボタン
   fill(255);//文字色を白に変更
   text("スタート画面に戻る", 20, 340);//スタート画面に戻るのテキスト
+  fill(0);
+  rect(10, 360, 200, 35);
+  fill(255);//文字色を白に変更
+  text("ゲームオーバー", 20, 385);//ゲームオーバーに行くテキスト
 }
 
 //ゲームの初期化
@@ -288,21 +302,27 @@ void backgroundImage(int j, int i) {
 
 //rect(30, 210, 90, 80);//文字画像変えるボタンを押したときの処理
 void colorChange() {
-  if (colorChangeFunction) {
+  if (mode==3) {
     //スタートボタンを設置
     background(255);
     fill(0);
     rect(170, 210, 160, 80);//スタートボタンの四角
+    rect(30, 300, 90, 80);//戻るボタンの四角
     textSize(30);
     fill(255);
     textAlign(CENTER);
     text("start", width/2, 260);
+    text("戻る", 75, 350);
     //数字の画像変更用のイメージを表示
     PImage numA=loadImage("img/number_0_A.png");//Aの数字の画像表示
     image(numA, 30, 100, 90, 80);
     PImage numB=loadImage("img/number_0_B.png");//Bの数字の画像表示
     image(numB, 150, 100, 90, 80);
     if (mousePressed) {
+      if (mouseX > 30&&mouseX < 120 && mouseY > 300&&mouseY < 380) {//戻るボタンを押したときの処理
+        setup();
+        mode=0;//スタート画面に戻る
+      }
       if (mouseX > 30 && mouseX < 120 && mouseY > 100 && mouseY < 180) {
         numImage="A";//Aの数字の画像に変更
       }
@@ -314,9 +334,43 @@ void colorChange() {
 }
 
 //rect(10, 315, 200, 40);//スタート画面に戻るのボタン
+//rect(10, 360, 200, 35);//ゲームオーバーの四角
 void returnToStart() {
   if (mouseX > 10 && mouseX < 210 && mouseY > 315 && mouseY < 355 && isStarted==false) {
     setup();
     isStarted = true;      //ゲーム開始前の状態を記録
+    gameOvermode=false;
+  }
+  if (mouseX > 10 && mouseX < 210 && mouseY > 360 && mouseY < 395 && isStarted==false) {
+    gameOvermode=true;
+    writeMap();
+  }
+}
+
+void lecture() {
+  if (mode==4) {
+    background(255);
+    textAlign(LEFT);
+    fill(0);
+    textSize(18);
+    text("このゲームは、2048という数字を作るゲームです。", 20, 50);
+    text("矢印キーで数字を動かし、同じ数字が重なると足されます。", 20, 80);
+    text("2048を作るとクリアです。", 20, 110);
+    text("リトライはRキー、一回戻すのはZキーです。", 20, 140);
+    //スタートボタンと戻るボタンの四角を設置
+    rect(170, 210, 160, 80);//スタートボタンの四角
+    rect(30, 300, 90, 80);//戻るボタンの四角
+    textSize(30);
+    fill(255);
+    textAlign(CENTER);
+    text("start", width/2, 260);
+    text("戻る", 75, 350);
+
+    if (mousePressed) {
+      if (mouseX > 30 &&mouseX < 120 && mouseY > 300 && mouseY < 380) {
+        setup();
+        mode=0;
+      }
+    }
   }
 }
