@@ -15,6 +15,7 @@ String numImage = "A";    //数字の画像を変更するための変数
 boolean colorChangeFunction = false;    //数字の画像を変更するための変数
 boolean gameOvermode= false;//簡単にゲームオーバー画面を表示するため
 int mode=0;//画面を管理するための変数(0:スタート画面、1:ゲーム画面、2:ゲームオーバー画面、3:数字変更画面,4:チュートリアル画面)
+int lectureNumX=250;//チュートリアル画面の数字の位置を管理するための変数
 
 //開始時のランダム生成とマップの表示
 void setup() {
@@ -41,6 +42,7 @@ void setup() {
   isStarted = true;      //ゲーム開始前の状態を記録
 }
 void draw() {
+  lecture();
 }
 
 void mousePressed() {
@@ -232,20 +234,16 @@ void writeMap() {
   }
   textSize(20);
   textAlign(LEFT);
+  PFont scoreFont = createFont("HGSoeiKakupoptai", 20);
+  textFont(scoreFont);
+  fill(212, 175, 55);
   text("スコア：" + score, 20, 250);    //スコアのテキスト
   text("リトライ：Rキー", 20, 280);    //リトライのテキスト
   text("一回戻す：Zキー", 20, 310);    //一回戻すのテキスト
-  //rect(10, 315, 200, 40);//スタート画面に戻るのボタン
-  //fill(255);//文字色を白に変更
   PImage back =loadImage("img/backToStart_button.png");
-  image(back, 10, 315, 200, 40);//スタート画面に戻る
-  //text("スタート画面に戻る", 20, 340);//スタート画面に戻るのテキスト
-  //fill(0);4
+  image(back, 10, 315, 200, 43);//スタート画面に戻る
   PImage gameOver =loadImage("img/gameOver_button.png");
-  image(gameOver, 10, 360, 200, 35);//ゲームオーバー
-  //rect(10, 360, 200, 35);
-  //fill(255);//文字色を白に変更
-  //text("ゲームオーバー", 20, 385);//ゲームオーバーに行くテキスト
+  image(gameOver, 10, 360, 200, 38);//ゲームオーバー
 }
 
 //ゲームの初期化
@@ -340,39 +338,37 @@ void colorChange() {
   }
 }
 
-//rect(10, 315, 200, 40);//スタート画面に戻るのボタン
-//rect(10, 360, 200, 35);//ゲームオーバーの四角
+//rect(10, 315, 200, 43);//スタート画面に戻るのボタン
+//rect(10, 360, 200, 38);//ゲームオーバーの四角
 void returnToStart() {
-  if (mouseX > 10 && mouseX < 210 && mouseY > 315 && mouseY < 355 && isStarted==false) {
+  if (mouseX > 10 && mouseX < 210 && mouseY > 315 && mouseY < 358 && isStarted==false) {
     setup();
     isStarted = true;      //ゲーム開始前の状態を記録
     gameOvermode=false;
   }
-  if (mouseX > 10 && mouseX < 210 && mouseY > 360 && mouseY < 395 && isStarted==false) {
+  if (mouseX > 10 && mouseX < 210 && mouseY > 360 && mouseY < 398 && isStarted==false) {
     gameOvermode=true;
     writeMap();
   }
 }
-
+//lectureNumX=250;
 void lecture() {
   if (mode==4) {
-    background(255);
-    textAlign(LEFT);
-    fill(0);
-    textSize(18);
-    text("このゲームは、2048という数字を作るゲームです。", 20, 50);
-    text("矢印キーで数字を動かし、同じ数字が重なると足されます。", 20, 80);
-    text("2048を作るとクリアです。", 20, 110);
-    text("リトライはRキー、一回戻すのはZキーです。", 20, 140);
-    //スタートボタンと戻るボタンの四角を設置
-    PImage back =loadImage("img/back_button.png");
-    image(back, 30, 300, 110, 80);//戻るボタンの四角
-    PImage gameStart =loadImage("img/gameStart_button.png");
-    image(gameStart, 170, 210, 160, 80);//スタートボタンの四角
-    textSize(30);
-    fill(255);
-    textAlign(CENTER);
-
+    if (lectureNumX == 100) {
+      lectureletter();
+      PImage numA=loadImage("img/number_4_"+numImage+".png");//Aの数字の画像表示
+      image(numA, 100, 10, 70, 60);
+      lectureNumX=lectureNumX-1;
+    }else if(lectureNumX == 99){
+      delay(1000);
+      lectureNumX=250;
+    }else{
+      lectureletter();
+      PImage numA=loadImage("img/number_2_"+numImage+".png");//Aの数字の画像表示
+      image(numA, 100, 10, 70, 60);
+      image(numA, lectureNumX, 10, 70, 60);
+      lectureNumX=lectureNumX-2;
+    } 
     if (mousePressed) {
       if (mouseX > 30 &&mouseX < 140 && mouseY > 300 && mouseY < 380) {
         setup();
@@ -380,4 +376,22 @@ void lecture() {
       }
     }
   }
+}
+
+void lectureletter(){
+  background(255);
+  textAlign(LEFT);
+  fill(0);
+  textSize(18);
+  text("このゲームは、2048を作るゲームです。", 20, 100);
+  text("矢印キーで数字を動かし、同じ数字が重なると足されます。", 20, 120);
+  text("2がランダムマップ上に生成されます。", 20, 140);
+  text("2048を作るとクリアです。", 20, 160);
+  text("動かせなくなるとゲームオーバーです。", 20, 180);
+  text("リトライはRキー、一回戻すのはZキーです。", 20, 200);
+  //スタートボタンと戻るボタンの四角を設置
+  PImage back =loadImage("img/back_button.png");
+  image(back, 30, 300, 110, 80);//戻るボタンの四角
+  PImage gameStart =loadImage("img/gameStart_button.png");
+  image(gameStart, 170, 210, 160, 80);//スタートボタンの四角
 }
