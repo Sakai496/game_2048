@@ -16,6 +16,7 @@ boolean colorChangeFunction = false;    //数字の画像を変更するため�
 boolean gameOvermode= false;//簡単にゲームオーバー画面を表示するため
 int mode=0;//画面を管理するための変数(0:スタート画面、1:ゲーム画面、2:ゲームオーバー画面、3:数字変更画面,4:チュートリアル画面)
 int lectureNumX=250;//チュートリアル画面の数字の位置を管理するための変数
+int Y2=-40;//2048の2の位置を管理するための変数
 
 //開始時のランダム生成とマップの表示
 void setup() {
@@ -25,17 +26,7 @@ void setup() {
   background(255);
   fill(200, 200, 255);
   noStroke();
-  PImage gameStart =loadImage("img/gameStart_button.png");
-  image(gameStart, 170, 210, 160, 80);//スタートボタン
-  PImage letterChange=loadImage("img/letterChange_button.png");//文字の背景
-  image(letterChange, 30, 210, 100, 80);
-  PImage tutorial =loadImage("img/tutorial_button.png");
-  image(tutorial, 380, 210, 100, 80);//チュートリアルのボタン
-  textSize(80);
   fill(0);
-  textAlign(CENTER);
-  text("2048", width/2, 150);
-  textSize(30);
   textSize(20);
   textAlign(LEFT);
   mode=0;//スタート画面
@@ -43,6 +34,7 @@ void setup() {
 }
 void draw() {
   lecture();
+  letter2048();
 }
 
 void mousePressed() {
@@ -356,7 +348,8 @@ void lecture() {
   if (mode==4) {
     if (lectureNumX == 100) {
       lectureletter();
-      PImage numA=loadImage("img/number_4_"+numImage+".png");//Aの数字の画像表示
+      PImage numA=loadImage("img/number_4_"+numImage+".png");//4の数字の画像表示
+      
       image(numA, 100, 10, 70, 60);
       lectureNumX=lectureNumX-1;
     }else if(lectureNumX == 99){
@@ -364,7 +357,7 @@ void lecture() {
       lectureNumX=250;
     }else{
       lectureletter();
-      PImage numA=loadImage("img/number_2_"+numImage+".png");//Aの数字の画像表示
+      PImage numA=loadImage("img/number_2_"+numImage+".png");//2の数字の画像表示
       image(numA, 100, 10, 70, 60);
       image(numA, lectureNumX, 10, 70, 60);
       lectureNumX=lectureNumX-2;
@@ -383,10 +376,9 @@ void lectureletter(){
   textAlign(LEFT);
   fill(0);
   textSize(18);
-  text("このゲームは、2048を作るゲームです。", 20, 100);
-  text("矢印キーで数字を動かし、同じ数字が重なると足されます。", 20, 120);
-  text("2がランダムマップ上に生成されます。", 20, 140);
-  text("2048を作るとクリアです。", 20, 160);
+  text("このゲームは、2048を作るゲームです。", 20, 120);
+  text("矢印キーで数字を動かし、同じ数字が重なると足されます。", 20, 140);
+  text("2がランダムマップ上に生成されます。", 20, 160);
   text("動かせなくなるとゲームオーバーです。", 20, 180);
   text("リトライはRキー、一回戻すのはZキーです。", 20, 200);
   //スタートボタンと戻るボタンの四角を設置
@@ -394,4 +386,35 @@ void lectureletter(){
   image(back, 30, 300, 110, 80);//戻るボタンの四角
   PImage gameStart =loadImage("img/gameStart_button.png");
   image(gameStart, 170, 210, 160, 80);//スタートボタンの四角
+}
+
+void startMode(){
+  background(255);
+  PImage gameStart =loadImage("img/gameStart_button.png");
+  image(gameStart, 170, 210, 160, 80);//スタートボタン
+  PImage letterChange=loadImage("img/letterChange_button.png");//文字の背景
+  image(letterChange, 30, 210, 100, 80);
+  PImage tutorial =loadImage("img/tutorial_button.png");
+  image(tutorial, 380, 210, 100, 80);//チュートリアルのボタン
+}
+
+//2048の文字をアニメーション付きで表示する処理
+void letter2048(){
+  if (mode==0) {
+    if (Y2 < 110) {
+      startMode();
+      PImage num2=loadImage("img/number_2_"+numImage+".png");
+      PImage num0=loadImage("img/number_0_"+numImage+".png");
+      PImage num4=loadImage("img/number_4_"+numImage+".png");
+      PImage num8=loadImage("img/number_8_"+numImage+".png");
+      image(num2, 100, Y2, 70, Y2);//2の数字の画像表示
+      image(num0, 170, Y2, 70, Y2);//0の数字の画像表示
+      image(num4, 240, Y2, 70, Y2);//4の数字の画像表示
+      image(num8, 310, Y2, 70, Y2);//8の数字の画像表示
+      Y2=Y2+2;
+    }else if (Y2 == 110) {
+      delay(3000);
+      Y2=-40;
+    }
+  }
 }
