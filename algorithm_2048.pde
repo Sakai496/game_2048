@@ -10,9 +10,16 @@ int tentativeScore;    //keyPressed()で使用
 int[][] mapList;    //マップの状態を記録
 int[][] recordList;    //keyPressed()で使用
 int[][] tentativeList;    //keyPressed()で使用(仮のリスト)
-// String strMap;     //drawMap()で使用
+String strMap;     //drawMap()で使用
 String numImage = "A";    //数字の画像を変更するための変数
 boolean colorChangeFunction = false;    //数字の画像を変更するための変数
+
+
+int time = 0;    //タイマー用
+int elapsed = 0;    //タイマー用
+boolean isElapsed = false;    //タイマー開始の状態を記録
+boolean keyCommand = true;    //キー入力を有効化するための変数
+boolean k = false;    //リトライ確認の状態を記録するための変数
 
 //開始時のランダム生成とマップの表示
 void setup() {
@@ -37,6 +44,47 @@ void setup() {
 }
 
 void draw() {
+  if (isGameover && isElapsed) {                  //動かせなくなったらタイマー開始
+    keyCommand = false;                //キー入力を無効化
+    elapsed = millis() - time;       //経過時間を計算
+    println(elapsed);                //確認用
+    println(keyCommand);                //確認用
+    PImage img1;
+    PImage img2;
+    img1 = loadImage("img/gameOver_background_eating1.png");
+    img2 = loadImage("img/gameOver_background_eating2.png");
+   if (elapsed > 1000) {    //1秒経過したら
+    image(img1, 180, 8, 150, 200);
+    fill(245);
+    rect(330, 8, 120, 200);
+   }
+   if (elapsed > 2000) {    //2秒経過したら
+    tint(245);
+    image(img2, 110, 8, 150, 200);
+    fill(245);
+    rect(230, 8, 200, 200);
+   }
+  
+   if (elapsed > 3000) {    //3秒経過したら
+    fill(245);
+    rect(50, 8, 400, 200);
+   }
+   if (elapsed > 4000) {    //4秒経過したら
+    fill(0);
+    textSize(50);
+    text("スコア：" + score, 110, 90);
+    isElapsed = false;      //タイマー終了の状態を記録
+    k = true;      //リトライ確認の状態を記録
+    fill(0);
+    rect(80, 120, 160, 60);
+    rect(260, 120, 160, 60);
+    fill(255);
+    textSize(20);
+    text("リトライ", 120, 160);
+    textSize(17);
+    text("スタート画面に戻る", 265, 160);
+   }
+ }
 }
 
 void mousePressed() {
@@ -62,6 +110,20 @@ void mousePressed() {
       startGame();
     }
   }
+
+  if (k) {
+    if (mouseX > 80 && mouseX < 240 && mouseY > 120 && mouseY < 180) {      //リトライを選択した場合
+      k = false;      //リトライ確認を終了
+      keyCommand = true;                //キー入力を有効化
+      startGame();
+    }
+    if (mouseX > 260 && mouseX < 420 && mouseY > 120 && mouseY < 180) {      //スタート画面に戻るを選択した場合
+      k = false;      //リトライ確認を終了
+      keyCommand = true;                //キー入力を有効化
+      setup();
+    }
+  }
+
 }
 
 //キー入力の処理
@@ -69,11 +131,20 @@ void keyPressed() {
   if (isStarted || isRetry) {      //ゲーム開始前、リトライ確認中
     return;     //キー入力を無視する
   }
-  if (key == 'r' || key == 'R') {     //リトライが押された場合
+  
+  if (keyCommand) {
+   if (key == 'a' || key == 'A') {
+    isGameover = true;
+    writeMap();
+    return;
+
+
+   }
+   if (key == 'r' || key == 'R') {     //リトライが押された場合
     checkRetry();
     return;
-  }
-  if (key == 'z' || key == 'Z') {
+   }
+   if (key == 'z' || key == 'Z') {
     if (recordList != null) {
       loadMap(mapList, recordList);      //1つ前のマップを復元
       score = recordScore;      //1つ前のスコアを復元
@@ -81,36 +152,38 @@ void keyPressed() {
       writeMap();
     }
     return;
-  }
-  if (keyCode == UP) {
+   }
+   if (keyCode == UP) {
     keyInput = 0;
-  }
-  if (keyCode == DOWN) {
+   }
+   if (keyCode == DOWN) {
     keyInput = 1;
-  }
-  if (keyCode == LEFT) {
+   }
+   if (keyCode == LEFT) {
     keyInput = 2;
-  }
-  if (keyCode == RIGHT) {
+   }
+   if (keyCode == RIGHT) {
     keyInput = 3;
-  }
+   }
+  
 
-  loadMap(tentativeList, mapList);    //移動前のマップを記録
-  tentativeScore = score;    //移動前のスコアを記録
+   loadMap(tentativeList, mapList);    //移動前のマップを記録
+   tentativeScore = score;    //移動前のスコアを記録
 
-  isMoved = false;      //移動回数を初期化(今回の入力で1回でも動いたかを記録)
-  for (int i = 0; i < 4; i++) {
+   isMoved = false;      //移動回数を初期化(今回の入力で1回でも動いたかを記録)
+   for (int i = 0; i < 4; i++) {
     move(i);    //移動して
     sum(i);     //足して
     move(i);    //移動する
-  }
-  if (isMoved) {        //一回でも動いたなら
+   }
+   if (isMoved) {        //一回でも動いたなら
     add2();
     loadMap(recordList, tentativeList);    //1つ前のマップを更新
     recordScore =  tentativeScore;    //1つ前のスコアを更新
-  }
-  checkGameover();
-  writeMap();
+   }
+   checkGameover();
+   writeMap();
+ }
 }
 
 //0以外の数字を手前(移動方向)に寄せる処理(足し算はしない)
@@ -179,7 +252,7 @@ void add2() {
 
 //動かせなくなったかの確認(0があれば動かせる、連続した同じ数があれば動かせる)
 void checkGameover() {
-  isGameover = true;
+  isGameover = true;      //動かせない状態を記録
   for (int i = 0; i < 4; i++) {
     for (int j = 0; j < 4; j++) {
       if (mapList[j][i] == 0) {
@@ -194,20 +267,25 @@ void checkGameover() {
         isGameover = false;
       }
     }
-  }
+  }  
 }
 
 //マップ、ゲームオーバー、スコアの表示
 void writeMap() {
   background(255);
   textSize(50);
+
   if (isGameover) {                       //動かせなくなったら
+    time = millis();        //タイマー用
     background(255, 80, 30);
     text("Game Over", 190, 350);      //テキスト表示
+    isElapsed = true;      //タイマー開始の状態を記録
   }
+
+
   for (int i = 0; i < 4; i++) {
     for (int j = 0; j < 4; j++) {
-      String strMap = str(mapList[j][i]);     //現在地の数を記録
+      strMap = str(mapList[j][i]);     //現在地の数を記録
       fill(250);                         //背景の色
       if (mapList[j][i] == 0) {          //現在地が0なら
         strMap = " ";                         //空白にして
@@ -254,6 +332,7 @@ void checkRetry() {
   fill(200, 200, 255);
   rect(270, 120, 160, 70);
   fill(0);
+  textSize(20);
   text("本当にリトライしますか？", 130, 100);
   text("いいえ", 120, 160);
   text("はい", 330, 160);
@@ -285,7 +364,18 @@ void numImage(int j, int i, String s) {
 //背景を画像で表示
 void backgroundImage(int j, int i) {
   if (mapList[j][i] != 0) {
-    tint(#823809);//画像全体に色付け
+    if (mapList[j][i] <= 10) {
+      tint(#893333);//画像全体に色付け
+    }else if (mapList[j][i] <= 100) {
+      tint(#FFE4C4);//画像全体に色付け
+    }else if (mapList[j][i] <= 1000) {
+      tint(#FF9B9B);//画像全体に色付け
+    }else if (mapList[j][i] <=10000) {
+      tint(#44B22E);//画像全体に色付け
+    }else if (mapList[j][i] >= 100000) {
+      tint(#893333);//画像全体に色付け
+    }
+    
     PImage backImg=loadImage("img/background_1.png");
     image(backImg, i*100+50, j*50+8, 100, 50);//サイズと位置
     noTint();//色付け終了
@@ -308,6 +398,11 @@ void colorChange() {
     image(numA, 30, 100, 90, 80);
     PImage numB=loadImage("img/number_0_B.png");//Bの数字の画像表示
     image(numB, 150, 100, 90, 80);
+
+
+ 
+
+
     if (mousePressed) {
       if (mouseX > 30 && mouseX < 120 && mouseY > 100 && mouseY < 180) {
         numImage="A";//Aの数字の画像に変更
@@ -315,6 +410,16 @@ void colorChange() {
       if (mouseX > 150 && mouseX < 240 && mouseY > 100 && mouseY < 180) {
         numImage="B";//Bの数字の画像に変更
       }
+    }
+    if (numImage == "A") {
+      fill(255, 00, 0, 128);
+      rect(30, 100, 90, 80);        //選択中の表示
+      image(numA, 30, 100, 90, 80);
+    }
+    if (numImage == "B") {
+      fill(255, 00, 0, 128);
+      rect(150, 100, 90, 80);        //選択中の表示
+      image(numB, 150, 100, 90, 80);
     }
   }
 }
@@ -324,5 +429,6 @@ void returnToStart() {
   if (mouseX > 10 && mouseX < 210 && mouseY > 315 && mouseY < 355 && isStarted==false) {
     setup();
     isStarted = true;      //ゲーム開始前の状態を記録
+    keyCommand = true;                //キー入力を有効化
   }
 }
