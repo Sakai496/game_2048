@@ -1,9 +1,11 @@
 import java.util.Arrays;
+int n = 0;    //draw(),moveCell()で使用
 int keyInput;        //move(),sum(),keyPressed()で使用
 boolean isMoved;        //move(),sum(),keyPressed()で使用
 boolean isGameover;        //checkGameover(),writeMap()で使用
 boolean isStarted;        //setup(),mousePressed(),keyPressed()で使用
 boolean isRetry;        //keyPressed(),mousePressed(),checkRetry()で使用
+boolean isMoving = false;
 int score;    //sum(),writeMap()で使用
 int recordScore;    //keyPressed()で使用
 int tentativeScore;    //keyPressed()で使用
@@ -11,39 +13,75 @@ int[][] mapList;    //マップの状態を記録
 int[][] recordList;    //keyPressed()で使用
 int[][] tentativeList;    //keyPressed()で使用(仮のリスト)
 // String strMap;     //drawMap()で使用
-IntList moveCellList = new IntList();    //keyPressed()で使用
+PGraphics layer;
+FloatList moveCellList = new FloatList();    //keyPressed()で使用
 String numImage = "A";    //数字の画像を変更するための変数
 boolean colorChangeFunction = false;    //数字の画像を変更するための変数
 boolean gameOvermode= false;//簡単にゲームオーバー画面を表示するため
 int mode=0;//画面を管理するための変数(0:スタート画面、1:ゲーム画面、2:ゲームオーバー画面、3:数字変更画面,4:チュートリアル画面)
 int lectureNumX=250;//チュートリアル画面の数字の位置を管理するための変数
+int Y2=-40;//2048の2の位置を管理するための変数
+PImage[] NumberImageList=new PImage[10];//数字の画像表示
+PImage backImg;
+
 
 //開始時のランダム生成とマップの表示
 void setup() {
+  frameRate(60);
   size(500, 400);
   PFont font = createFont("Meiryo", 50);
   textFont(font);
   background(255);
   fill(200, 200, 255);
   noStroke();
-  PImage gameStart =loadImage("img/gameStart_button.png");
-  image(gameStart, 170, 210, 160, 80);//スタートボタン
-  PImage letterChange=loadImage("img/letterChange_button.png");//文字の背景
-  image(letterChange, 30, 210, 100, 80);
-  PImage tutorial =loadImage("img/tutorial_button.png");
-  image(tutorial, 380, 210, 100, 80);//チュートリアルのボタン
-  textSize(80);
   fill(0);
-  textAlign(CENTER);
-  text("2048", width/2, 150);
-  textSize(30);
   textSize(20);
   textAlign(LEFT);
   mode=0;//スタート画面
+  for (int i=0; i<10; i++) {
+    NumberImageList[i]=loadImage("img/number_"+i+"_"+numImage+".png");//数字の画像表示
+  }
+  backImg =loadImage("img/background_1.png");
+  layer = createGraphics(width, height);
   isStarted = true;      //ゲーム開始前の状態を記録
 }
 void draw() {
   lecture();
+  letter2048();
+
+  if (isMoving) {
+    layer.beginDraw();
+    layer.clear();                    // 古い画像を消去
+    layer.endDraw();
+
+    image(layer, 0, 0); // 画面に重ねる
+
+    for (int i = 0; i < moveCellList.size()/5; i++) {
+      int num = int(moveCellList.get(i*5));
+      moveCellList.set(i*5+1, moveCellList.get(i*5+1) + moveCellList.get(i*5+3)/4);
+      moveCellList.set(i*5+2, moveCellList.get(i*5+2) + moveCellList.get(i*5+4)/4);
+      println(moveCellList.get(i*5+2) + ", " + moveCellList.get(i*5+1));
+      tint(#823809);//画像全体に色付け
+      image(backImg, moveCellList.get(i*5+2)*100+50, moveCellList.get(i*5+1)*50+8, 100, 50);//サイズと位置
+      noTint();//色付け終了
+      for (int k=0; k<str(num).length(); k++) {
+        char numk=str(num).charAt(k);
+        PImage NumberImage=NumberImageList[Integer.parseInt(str(numk))];//数字の画像表示
+        image(NumberImage, (moveCellList.get(i*5+2)+1)*100-50+98/str(num).length()*k, moveCellList.get(i*5+1)*50+10, 98/str(num).length(), 48);//サイズと位置
+      }
+    }
+    n++;
+    delay(500);
+    if (n >= 4) {
+      n = 0;
+      isMoving = false;
+      writeMap();
+      // return;
+    }
+    layer.beginDraw();
+    layer.clear();
+    layer.endDraw();
+  }
 }
 
 void mousePressed() {
@@ -108,7 +146,9 @@ void keyPressed() {
     keyInput = 3;
   }
 
-  moveCellList = new IntList(0, 0);    //移動したマスの座標を記録するリストを初期化
+  moveCellList = new FloatList();    //移動したマスの座標を記録するリストを初期化
+  moveCellList.append(0);
+  moveCellList.append(0);
   loadMap(tentativeList, mapList);    //移動前のマップを記録
   tentativeScore = score;    //移動前のスコアを記録
 
@@ -121,9 +161,9 @@ void keyPressed() {
     loadMap(recordList, tentativeList);    //1つ前のマップを更新
     recordScore =  tentativeScore;    //1つ前のスコアを更新
   }
-  println(moveCellList,keyInput/2);
+  moveCell();
   checkGameover();
-  writeMap();
+  // writeMap();
 }
 
 
@@ -140,18 +180,24 @@ void run(int keyInput) {
         mapList[zeroPointList[keyInput]][zeroPointList[(keyInput+2)%4]] = 0;
         mapList[afterPointList[keyInput]][afterPointList[(keyInput+2)%4]] = m;
         if (n > 0 && sumPoint != n && mapList[afterPointList[keyInput]][afterPointList[(keyInput+2)%4]] == mapList[nextPointList[keyInput]][nextPointList[(keyInput+2)%4]]) {
+          moveCellList.append(mapList[nextPointList[keyInput]][nextPointList[(keyInput+2)%4]]);
           mapList[nextPointList[keyInput]][nextPointList[(keyInput+2)%4]] *= 2;
           score += mapList[nextPointList[keyInput]][nextPointList[(keyInput+2)%4]];
           mapList[afterPointList[keyInput]][afterPointList[(keyInput+2)%4]] = 0;
           sumPoint = n;
           isMoved = true;
-          moveCellList.append((zeroPointList[keyInput%2]+1)*(4-3*keyInput/2)+(i+1)*(1+3*keyInput/2));
-          moveCellList.append((nextPointList[keyInput%2]+1)*(4-3*keyInput/2)+(i+1)*(1+3*keyInput/2));
+          moveCellList.append(zeroPointList[keyInput]);
+          moveCellList.append(zeroPointList[(keyInput+2)%4]);
+          moveCellList.append(nextPointList[keyInput] - zeroPointList[keyInput]);
+          moveCellList.append(nextPointList[(keyInput+2)%4] - zeroPointList[(keyInput+2)%4]);
         } else {
           if (j != n) {
             isMoved = true;      //移動を記録(keyPressed()で使用)
-            moveCellList.append((zeroPointList[keyInput%2]+1)*(4-3*keyInput/2)+(i+1)*(1+3*keyInput/2));
-            moveCellList.append((afterPointList[keyInput%2]+1)*(4-3*keyInput/2)+(i+1)*(1+3*keyInput/2));
+            moveCellList.append(mapList[afterPointList[keyInput]][afterPointList[(keyInput+2)%4]]);
+            moveCellList.append(zeroPointList[keyInput]);
+            moveCellList.append(zeroPointList[(keyInput+2)%4]);
+            moveCellList.append(afterPointList[keyInput] - zeroPointList[keyInput]);
+            moveCellList.append(afterPointList[(keyInput+2)%4] - zeroPointList[(keyInput+2)%4]);
           }
           n++;
         }
@@ -247,7 +293,9 @@ void startGame() {
   mapList = new int[4][4];    //4*4のマップを生成(要素はすべて0)
   recordList = new int[4][4]; //1つ前のマップを記録するリストを生成
   tentativeList = new int[4][4];  //recordListの仮のリストを生成
-  moveCellList = new IntList(0, 0);    //移動したマスの座標を記録するリストを初期化
+  moveCellList = new FloatList();    //移動したマスの座標を記録するリストを初期化
+  moveCellList.append(0);
+  moveCellList.append(0);
   score = 0;
   for (int i = 0; i < 2; i++) {      //2つ生成
     add2();
@@ -287,7 +335,7 @@ void numImage(int j, int i, String s) {
   if (mapList[j][i] != 0) {
     for (int k=0; k<s.length(); k++) {
       char numk=s.charAt(k);
-      PImage NumberImage=loadImage("img/number_"+numk+"_"+numImage+".png");//数字の画像表示
+      PImage NumberImage=NumberImageList[Integer.parseInt(str(numk))];//数字の画像表示
       image(NumberImage, (i+1)*100-50+98/s.length()*k, j*50+10, 98/s.length(), 48);//サイズと位置
     }
   }
@@ -297,11 +345,17 @@ void numImage(int j, int i, String s) {
 void backgroundImage(int j, int i) {
   if (mapList[j][i] != 0) {
     tint(#823809);//画像全体に色付け
-    PImage backImg=loadImage("img/background_1.png");
     image(backImg, i*100+50, j*50+8, 100, 50);//サイズと位置
     noTint();//色付け終了
   }
 }
+
+void moveCell() {
+  if (!isMoving) {
+    isMoving = true;
+  }
+}
+
 
 //rect(30, 210, 90, 80);//文字画像変えるボタンを押したときの処理
 void colorChange() {
@@ -354,19 +408,20 @@ void lecture() {
   if (mode==4) {
     if (lectureNumX == 100) {
       lectureletter();
-      PImage numA=loadImage("img/number_4_"+numImage+".png");//Aの数字の画像表示
+      PImage numA=NumberImageList[4];//4の数字の画像表示
+
       image(numA, 100, 10, 70, 60);
       lectureNumX=lectureNumX-1;
-    }else if(lectureNumX == 99){
+    } else if (lectureNumX == 99) {
       delay(1000);
       lectureNumX=250;
-    }else{
+    } else {
       lectureletter();
-      PImage numA=loadImage("img/number_2_"+numImage+".png");//Aの数字の画像表示
+      PImage numA=NumberImageList[2];//2の数字の画像表示
       image(numA, 100, 10, 70, 60);
       image(numA, lectureNumX, 10, 70, 60);
       lectureNumX=lectureNumX-2;
-    } 
+    }
     if (mousePressed) {
       if (mouseX > 30 &&mouseX < 140 && mouseY > 300 && mouseY < 380) {
         setup();
@@ -376,15 +431,14 @@ void lecture() {
   }
 }
 
-void lectureletter(){
+void lectureletter() {
   background(255);
   textAlign(LEFT);
   fill(0);
   textSize(18);
-  text("このゲームは、2048を作るゲームです。", 20, 100);
-  text("矢印キーで数字を動かし、同じ数字が重なると足されます。", 20, 120);
-  text("2がランダムマップ上に生成されます。", 20, 140);
-  text("2048を作るとクリアです。", 20, 160);
+  text("このゲームは、2048を作るゲームです。", 20, 120);
+  text("矢印キーで数字を動かし、同じ数字が重なると足されます。", 20, 140);
+  text("2がランダムマップ上に生成されます。", 20, 160);
   text("動かせなくなるとゲームオーバーです。", 20, 180);
   text("リトライはRキー、一回戻すのはZキーです。", 20, 200);
   //スタートボタンと戻るボタンの四角を設置
@@ -392,4 +446,35 @@ void lectureletter(){
   image(back, 30, 300, 110, 80);//戻るボタンの四角
   PImage gameStart =loadImage("img/gameStart_button.png");
   image(gameStart, 170, 210, 160, 80);//スタートボタンの四角
+}
+
+void startMode() {
+  background(255);
+  PImage gameStart =loadImage("img/gameStart_button.png");
+  image(gameStart, 170, 210, 160, 80);//スタートボタン
+  PImage letterChange=loadImage("img/letterChange_button.png");//文字の背景
+  image(letterChange, 30, 210, 100, 80);
+  PImage tutorial =loadImage("img/tutorial_button.png");
+  image(tutorial, 380, 210, 100, 80);//チュートリアルのボタン
+}
+
+//2048の文字をアニメーション付きで表示する処理
+void letter2048() {
+  if (mode==0) {
+    if (Y2 < 110) {
+      startMode();
+      PImage num2=NumberImageList[2];//2の数字の画像表示
+      PImage num0=NumberImageList[0];//0の数字の画像表示
+      PImage num4=NumberImageList[4];//4の数字の画像表示
+      PImage num8=NumberImageList[8];//8の数字の画像表示
+      image(num2, 100, Y2, 70, Y2);//2の数字の画像表示
+      image(num0, 170, Y2, 70, Y2);//0の数字の画像表示
+      image(num4, 240, Y2, 70, Y2);//4の数字の画像表示
+      image(num8, 310, Y2, 70, Y2);//8の数字の画像表示
+      Y2=Y2+2;
+    } else if (Y2 == 110) {
+      delay(3000);
+      Y2=-40;
+    }
+  }
 }
