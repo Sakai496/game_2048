@@ -1,5 +1,7 @@
 import java.util.Arrays;
-int n = 0;    //draw(),moveCell()で使用
+int moveCount = 0;    //draw()で使用
+int cellQty = 4;    //マスの数
+int fps = 20;     //draw()で使用,アニメーションのコマ数
 int keyInput;        //move(),sum(),keyPressed()で使用
 boolean isMoved;        //move(),sum(),keyPressed()で使用
 boolean isGameover;        //checkGameover(),writeMap()で使用
@@ -12,8 +14,6 @@ int tentativeScore;    //keyPressed()で使用
 int[][] mapList;    //マップの状態を記録
 int[][] recordList;    //keyPressed()で使用
 int[][] tentativeList;    //keyPressed()で使用(仮のリスト)
-// String strMap;     //drawMap()で使用
-PGraphics layer;
 FloatList moveCellList = new FloatList();    //keyPressed()で使用
 String numImage = "A";    //数字の画像を変更するための変数
 boolean colorChangeFunction = false;    //数字の画像を変更するための変数
@@ -24,6 +24,18 @@ int Y2=-40;//2048の2の位置を管理するための変数
 PImage[] NumberImageList=new PImage[10];//数字の画像表示
 PImage backImg;
 
+
+int p;        //move(),sum(),keyPressed()で使用
+int q;        //move(),sum(),keyPressed()で使用
+int r;        //gameover(),writeMap()で使用
+
+
+
+int time = 0;    //タイマー用
+int elapsed = 0;    //タイマー用
+boolean isElapsed = false;    //タイマー開始の状態を記録
+boolean keyCommand = true;    //キー入力を有効化するための変数
+boolean k = false;    //リトライ確認の状態を記録するための変数
 
 //開始時のランダム生成とマップの表示
 void setup() {
@@ -42,45 +54,106 @@ void setup() {
     NumberImageList[i]=loadImage("img/number_"+i+"_"+numImage+".png");//数字の画像表示
   }
   backImg =loadImage("img/background_1.png");
-  layer = createGraphics(width, height);
   isStarted = true;      //ゲーム開始前の状態を記録
 }
+
 void draw() {
   lecture();
   letter2048();
 
   if (isMoving) {
-    layer.beginDraw();
-    layer.clear();                    // 古い画像を消去
-    layer.endDraw();
-
-    image(layer, 0, 0); // 画面に重ねる
+    fill(255);
+    rect(0, 0, width, 220);
+    fill(245);
+    for (int i=0; i<cellQty; i++) {
+      for (int j=0; j<cellQty; j++) {
+        rect(i*400/cellQty+200/cellQty, j*200/cellQty+40/cellQty, 392/cellQty, 192/cellQty);
+        if (mapList[j][i] != 0) {
+          backgroundImage(j, i);
+          numImage(j, i, str(mapList[j][i]));
+        }
+      }
+    }
+    fill(245);
+    for (int i=0; i<moveCellList.size()/5; i++) { //動くマスの数だけループ
+      float blx = moveCellList.get(i*5+2)+moveCellList.get(i*5+4)*(1-float(moveCount)/fps);
+      float bly = moveCellList.get(i*5+1)+moveCellList.get(i*5+3)*(1-float(moveCount)/fps);
+      rect(blx*400/cellQty+200/cellQty, bly*200/cellQty+40/cellQty, 392/cellQty, 192/cellQty);
+    }
 
     for (int i = 0; i < moveCellList.size()/5; i++) {
       int num = int(moveCellList.get(i*5));
-      moveCellList.set(i*5+1, moveCellList.get(i*5+1) + moveCellList.get(i*5+3)/4);
-      moveCellList.set(i*5+2, moveCellList.get(i*5+2) + moveCellList.get(i*5+4)/4);
-      println(moveCellList.get(i*5+2) + ", " + moveCellList.get(i*5+1));
-      tint(#823809);//画像全体に色付け
-      image(backImg, moveCellList.get(i*5+2)*100+50, moveCellList.get(i*5+1)*50+8, 100, 50);//サイズと位置
+      moveCellList.set(i*5+1, moveCellList.get(i*5+1) + moveCellList.get(i*5+3)/fps);
+      moveCellList.set(i*5+2, moveCellList.get(i*5+2) + moveCellList.get(i*5+4)/fps);
+      if (num <= 10) {
+        tint(#893333);//画像全体に色付け
+      } else if (num <= 100) {
+        tint(#FFE4C4);//画像全体に色付け
+      } else if (num <= 1000) {
+        tint(#FF9B9B);//画像全体に色付け
+      } else if (num <=10000) {
+        tint(#44B22E);//画像全体に色付け
+      } else if (num >= 100000) {
+        tint(#893333);//画像全体に色付け
+      }
+      image(backImg, moveCellList.get(i*5+2)*400/cellQty+200/cellQty, moveCellList.get(i*5+1)*200/cellQty+40/cellQty, 392/cellQty, 192/cellQty);//サイズと位置
       noTint();//色付け終了
       for (int k=0; k<str(num).length(); k++) {
         char numk=str(num).charAt(k);
         PImage NumberImage=NumberImageList[Integer.parseInt(str(numk))];//数字の画像表示
-        image(NumberImage, (moveCellList.get(i*5+2)+1)*100-50+98/str(num).length()*k, moveCellList.get(i*5+1)*50+10, 98/str(num).length(), 48);//サイズと位置
+        image(NumberImage, (moveCellList.get(i*5+2)+1)*400/cellQty-200/cellQty+392/cellQty/str(num).length()*k, moveCellList.get(i*5+1)*200/cellQty+40/cellQty, 392/cellQty/str(num).length(), 192/cellQty);//サイズと位置
       }
     }
-    n++;
-    delay(500);
-    if (n >= 4) {
-      n = 0;
+    moveCount++;
+    if (moveCount >= fps) {
+      moveCount = 0;
       isMoving = false;
+      add2();
+      checkGameover();
       writeMap();
-      // return;
     }
-    layer.beginDraw();
-    layer.clear();
-    layer.endDraw();
+  }
+
+  if (isGameover && isElapsed) {                  //動かせなくなったらタイマー開始
+    keyCommand = false;                //キー入力を無効化
+    elapsed = millis() - time;       //経過時間を計算
+    println(elapsed);                //確認用
+    println(keyCommand);                //確認用
+    PImage img1;
+    PImage img2;
+    img1 = loadImage("img/gameOver_background_eating1.png");
+    img2 = loadImage("img/gameOver_background_eating2.png");
+    if (elapsed > 1000) {    //1秒経過したら
+      image(img1, 180, 8, 150, 200);
+      fill(245);
+      rect(330, 8, 120, 200);
+    }
+    if (elapsed > 2000) {    //2秒経過したら
+      tint(245);
+      image(img2, 110, 8, 150, 200);
+      fill(245);
+      rect(230, 8, 200, 200);
+    }
+
+    if (elapsed > 3000) {    //3秒経過したら
+      fill(245);
+      rect(50, 8, 400, 200);
+    }
+    if (elapsed > 4000) {    //4秒経過したら
+      fill(0);
+      textSize(50);
+      text("スコア：" + score, 110, 90);
+      isElapsed = false;      //タイマー終了の状態を記録
+      k = true;      //リトライ確認の状態を記録
+      fill(0);
+      rect(80, 120, 160, 60);
+      rect(260, 120, 160, 60);
+      fill(255);
+      textSize(20);
+      text("リトライ", 120, 160);
+      textSize(17);
+      text("スタート画面に戻る", 265, 160);
+    }
   }
 }
 
@@ -88,6 +161,9 @@ void mousePressed() {
   if (mouseButton == LEFT && isStarted) {      //ゲーム開始前の状態
     if (mode==0 && mouseX > 380 && mouseX < 480 && mouseY > 210 && mouseY < 290) {
       mode=4;//チュートリアルの画面に移動
+    }
+    if (mouseX > 30 && mouseX < 120 && mouseY > 210 && mouseY < 290) {
+      colorChangeFunction=true;
     }
     if (mode==0 && mouseX > 30 && mouseX < 130 && mouseY > 210 && mouseY < 290) {
       mode=3;//数字の画像を変更する画面に移動
@@ -113,6 +189,19 @@ void mousePressed() {
       startGame();
     }
   }
+
+  if (k) {
+    if (mouseX > 80 && mouseX < 240 && mouseY > 120 && mouseY < 180) {      //リトライを選択した場合
+      k = false;      //リトライ確認を終了
+      keyCommand = true;                //キー入力を有効化
+      startGame();
+    }
+    if (mouseX > 260 && mouseX < 420 && mouseY > 120 && mouseY < 180) {      //スタート画面に戻るを選択した場合
+      k = false;      //リトライ確認を終了
+      keyCommand = true;                //キー入力を有効化
+      setup();
+    }
+  }
 }
 
 //キー入力の処理
@@ -120,64 +209,71 @@ void keyPressed() {
   if (isStarted || isRetry) {      //ゲーム開始前、リトライ確認中
     return;     //キー入力を無視する
   }
-  if (key == 'r' || key == 'R') {     //リトライが押された場合
-    checkRetry();
-    return;
-  }
-  if (key == 'z' || key == 'Z') {
-    if (recordList != null) {
-      loadMap(mapList, recordList);      //1つ前のマップを復元
-      score = recordScore;      //1つ前のスコアを復元
-      checkGameover();
+
+  if (keyCommand) {
+    if (key == 'a' || key == 'A') {
+      isGameover = true;
       writeMap();
+      return;
     }
-    return;
-  }
-  if (keyCode == UP) {
-    keyInput = 0;
-  }
-  if (keyCode == DOWN) {
-    keyInput = 1;
-  }
-  if (keyCode == LEFT) {
-    keyInput = 2;
-  }
-  if (keyCode == RIGHT) {
-    keyInput = 3;
-  }
+    if (key == 'r' || key == 'R') {     //リトライが押された場合
+      checkRetry();
+      return;
+    }
+    if (key == 'z' || key == 'Z') {
+      if (recordList != null) {
+        loadMap(mapList, recordList);      //1つ前のマップを復元
+        score = recordScore;      //1つ前のスコアを復元
+        checkGameover();
+        writeMap();
+      }
+      return;
+    }
+    if (keyCode == UP) {
+      keyInput = 0;
+    }
+    if (keyCode == DOWN) {
+      keyInput = 1;
+    }
+    if (keyCode == LEFT) {
+      keyInput = 2;
+    }
+    if (keyCode == RIGHT) {
+      keyInput = 3;
+    }
 
-  moveCellList = new FloatList();    //移動したマスの座標を記録するリストを初期化
-  moveCellList.append(0);
-  moveCellList.append(0);
-  loadMap(tentativeList, mapList);    //移動前のマップを記録
-  tentativeScore = score;    //移動前のスコアを記録
 
-  isMoved = false;      //移動回数を初期化(今回の入力で1回でも動いたかを記録)
-  run(keyInput);    //移動する
-  if (isMoved) {        //一回でも動いたなら
-    moveCellList.remove(0);
-    moveCellList.remove(0);
-    add2();
-    loadMap(recordList, tentativeList);    //1つ前のマップを更新
-    recordScore =  tentativeScore;    //1つ前のスコアを更新
+    moveCellList = new FloatList();    //移動したマスの座標を記録するリストを初期化
+    loadMap(tentativeList, mapList);    //移動前のマップを記録
+    tentativeScore = score;    //移動前のスコアを記録
+
+    isMoved = false;      //移動回数を初期化(今回の入力で1回でも動いたかを記録)
+    run(keyInput);    //移動する
+    if (isMoved) {        //一回でも動いたなら
+      if (!isMoving) {
+        isMoving = true;
+      }
+      loadMap(recordList, tentativeList);    //1つ前のマップを更新
+      recordScore =  tentativeScore;    //1つ前のスコアを更新
+    }
+    checkGameover();
+
+    // writeMap();
   }
-  moveCell();
-  checkGameover();
-  // writeMap();
 }
 
 
 void run(int keyInput) {
-  for (int i = 0; i < 4; i++) {
+  for (int i = 0; i < cellQty; i++) {
     int n = 0;
     int sumPoint = -1;
-    for (int j = 0; j < 4; j++) {
-      int[] zeroPointList = {j, 3-j, i, i};
-      int[] afterPointList = {n, 3-n, i, i};
-      int[] nextPointList = {n-1, 4-n, i, i};
-      if (mapList[zeroPointList[keyInput]][zeroPointList[(keyInput+2)%4]] != 0) {
-        int m = mapList[zeroPointList[keyInput]][zeroPointList[(keyInput+2)%4]];
-        mapList[zeroPointList[keyInput]][zeroPointList[(keyInput+2)%4]] = 0;
+    for (int j = 0; j < cellQty; j++) {
+      int[] zeroPointList = {j, cellQty - 1 - j, i, i};
+      int[] afterPointList = {n, cellQty - 1 - n, i, i};
+      int[] nextPointList = {n - 1, cellQty - n, i, i};
+      if (mapList[zeroPointList[keyInput]][zeroPointList[(keyInput + 2) % 4]] != 0) {
+        int m = mapList[zeroPointList[keyInput]][zeroPointList[(keyInput + 2) % 4]];
+        mapList[zeroPointList[keyInput]][zeroPointList[(keyInput + 2) % 4]] = 0;
         mapList[afterPointList[keyInput]][afterPointList[(keyInput+2)%4]] = m;
         if (n > 0 && sumPoint != n && mapList[afterPointList[keyInput]][afterPointList[(keyInput+2)%4]] == mapList[nextPointList[keyInput]][nextPointList[(keyInput+2)%4]]) {
           moveCellList.append(mapList[nextPointList[keyInput]][nextPointList[(keyInput+2)%4]]);
@@ -211,18 +307,18 @@ void add2() {
   int add2Count = 0;      //2の生成回数(1回だけにする)
   int idx = 0;          //シャッフル後リストの座標
   StringList orderedList = new StringList();      //空の文字列リスト
-  for (int i = 0; i < 16; i++) {            //0から15まで追加
+  for (int i = 0; i < cellQty * cellQty; i++) {            //0から15まで追加
     orderedList.append(str(i));
   }
   orderedList.shuffle();      //シャッフルする
 
-  int[] shuffledList = new int[16];          //0が16個入ったリスト
-  for (int i = 0; i < 16; i++) {
+  int[] shuffledList = new int[cellQty * cellQty];          //0が16個入ったリスト
+  for (int i = 0; i < cellQty * cellQty; i++) {
     shuffledList[i] = Integer.parseInt(orderedList.get(i));      //シャッフル後の数列を取得
   }
   while (add2Count < 1) {      //2が生成されるまでループ
-    if (mapList[shuffledList[idx]/4][shuffledList[idx]%4] == 0) {      //現在地が0なら
-      mapList[shuffledList[idx]/4][shuffledList[idx]%4] = 2;      //2を生成
+    if (mapList[shuffledList[idx]/cellQty][shuffledList[idx]%cellQty] == 0) {      //現在地が0なら
+      mapList[shuffledList[idx]/cellQty][shuffledList[idx]%cellQty] = 2;      //2を生成
       add2Count++;      //生成回数を記録
     }
     if (add2Count == 0) {      //生成できていないなら
@@ -234,13 +330,13 @@ void add2() {
 //動かせなくなったかの確認(0があれば動かせる、連続した同じ数があれば動かせる)
 void checkGameover() {
   isGameover = true;      //動かせない状態を記録
-  for (int i = 0; i < 4; i++) {
-    for (int j = 0; j < 4; j++) {
+  for (int i = 0; i < cellQty; i++) {
+    for (int j = 0; j < cellQty; j++) {
       if (mapList[j][i] == 0) {
         isGameover = false;
       }
     }
-    for (int j = 0; j < 3; j++) {
+    for (int j = 0; j < cellQty - 1; j++) {
       if (mapList[j][i] == mapList[j+1][i]) {
         isGameover = false;
       }
@@ -255,23 +351,23 @@ void checkGameover() {
 void writeMap() {
   background(255);
   textSize(50);
-  if (isGameover||gameOvermode) {                       //動かせなくなったら
+  if (isGameover||gameOvermode) {
+    //動かせなくなったら
+    time = millis();        //タイマー用
     background(255, 80, 30);
     text("Game Over", 190, 350);      //テキスト表示
+    isElapsed = true;      //タイマー開始の状態を記録
   }
-  for (int i = 0; i < 4; i++) {
-    for (int j = 0; j < 4; j++) {
+  for (int i = 0; i < cellQty; i++) {
+    for (int j = 0; j < cellQty; j++) {
       String strMap = str(mapList[j][i]);     //現在地の数を記録
-      fill(247);
       if (mapList[j][i] == 0) {          //現在地が0なら
         strMap = " ";                         //空白にして
         fill(245);
       }
-      rect(i*100+50, j*50+10, 98, 48);    //マスの表示
+      rect(i*400/cellQty+200/cellQty, j*200/cellQty+40/cellQty, 392/cellQty, 192/cellQty);    //マスの表示
       backgroundImage(j, i);           //背景を画像で表示
       numImage(j, i, strMap);           //数を画像で表示
-      fill(0);                                //数の色
-      // text(strMap, i*100+50, (j+1)*50);    //数を表示
     }
   }
   textSize(20);
@@ -290,12 +386,10 @@ void writeMap() {
 
 //ゲームの初期化
 void startGame() {
-  mapList = new int[4][4];    //4*4のマップを生成(要素はすべて0)
-  recordList = new int[4][4]; //1つ前のマップを記録するリストを生成
-  tentativeList = new int[4][4];  //recordListの仮のリストを生成
+  mapList = new int[cellQty][cellQty];    //4*4のマップを生成(要素はすべて0)
+  recordList = new int[cellQty][cellQty]; //1つ前のマップを記録するリストを生成
+  tentativeList = new int[cellQty][cellQty];  //recordListの仮のリストを生成
   moveCellList = new FloatList();    //移動したマスの座標を記録するリストを初期化
-  moveCellList.append(0);
-  moveCellList.append(0);
   score = 0;
   for (int i = 0; i < 2; i++) {      //2つ生成
     add2();
@@ -315,6 +409,7 @@ void checkRetry() {
   fill(200, 200, 255);
   rect(270, 120, 160, 70);
   fill(0);
+  textSize(20);
   text("本当にリトライしますか？", 130, 100);
   text("いいえ", 120, 160);
   text("はい", 330, 160);
@@ -323,12 +418,14 @@ void checkRetry() {
 
 //マップの状態をコピーする処理
 void loadMap(int[][] in, int[][] out) {
-  for (int i = 0; i < 4; i++) {
-    for (int j = 0; j < 4; j++) {
+  for (int i = 0; i < cellQty; i++) {
+    for (int j = 0; j < cellQty; j++) {
       in[j][i] = out[j][i];
+      r = 1;
     }
   }
 }
+
 
 //数字を画像で表示
 void numImage(int j, int i, String s) {
@@ -336,7 +433,7 @@ void numImage(int j, int i, String s) {
     for (int k=0; k<s.length(); k++) {
       char numk=s.charAt(k);
       PImage NumberImage=NumberImageList[Integer.parseInt(str(numk))];//数字の画像表示
-      image(NumberImage, (i+1)*100-50+98/s.length()*k, j*50+10, 98/s.length(), 48);//サイズと位置
+      image(NumberImage, (i+1)*400/cellQty-200/cellQty+392/cellQty/s.length()*k, j*200/cellQty+40/cellQty, 392/cellQty/s.length(), 192/cellQty);//サイズと位置
     }
   }
 }
@@ -344,17 +441,24 @@ void numImage(int j, int i, String s) {
 //背景を画像で表示
 void backgroundImage(int j, int i) {
   if (mapList[j][i] != 0) {
-    tint(#823809);//画像全体に色付け
-    image(backImg, i*100+50, j*50+8, 100, 50);//サイズと位置
+    if (mapList[j][i] <= 10) {
+      tint(#893333);//画像全体に色付け
+    } else if (mapList[j][i] <= 100) {
+      tint(#FFE4C4);//画像全体に色付け
+    } else if (mapList[j][i] <= 1000) {
+      tint(#FF9B9B);//画像全体に色付け
+    } else if (mapList[j][i] <=10000) {
+      tint(#44B22E);//画像全体に色付け
+    } else if (mapList[j][i] >= 100000) {
+      tint(#893333);//画像全体に色付け
+    }
+
+    PImage backImg=loadImage("img/background_1.png");
+    image(backImg, i*400/cellQty+200/cellQty, j*200/cellQty+40/cellQty, 392/cellQty, 192/cellQty);//サイズと位置
     noTint();//色付け終了
   }
 }
 
-void moveCell() {
-  if (!isMoving) {
-    isMoving = true;
-  }
-}
 
 
 //rect(30, 210, 90, 80);//文字画像変えるボタンを押したときの処理
@@ -387,6 +491,16 @@ void colorChange() {
         numImage="B";//Bの数字の画像に変更
       }
     }
+    if (numImage == "A") {
+      fill(255, 00, 0, 128);
+      rect(30, 100, 90, 80);        //選択中の表示
+      image(numA, 30, 100, 90, 80);
+    }
+    if (numImage == "B") {
+      fill(255, 00, 0, 128);
+      rect(150, 100, 90, 80);        //選択中の表示
+      image(numB, 150, 100, 90, 80);
+    }
   }
 }
 
@@ -401,6 +515,7 @@ void returnToStart() {
   if (mouseX > 10 && mouseX < 210 && mouseY > 360 && mouseY < 398 && isStarted==false) {
     gameOvermode=true;
     writeMap();
+    keyCommand = true;                //キー入力を有効化
   }
 }
 //lectureNumX=250;
@@ -478,3 +593,4 @@ void letter2048() {
     }
   }
 }
+//これは青木のやつです2
