@@ -16,8 +16,7 @@ boolean colorChangeFunction = false;    //数字の画像を変更するため�
 boolean gameOvermode= false;//簡単にゲームオーバー画面を表示するため
 int mode=0;//画面を管理するための変数(0:スタート画面、1:ゲーム画面、2:ゲームオーバー画面、3:数字変更画面,4:チュートリアル画面)
 int lectureNumX=250;//チュートリアル画面の数字の位置を管理するための変数
-int Y2=-40;//2048の2の位置を管理するための変数
-
+int Y2=0;//2048の2の位置を管理するための変数
 int time = 0;    //タイマー用
 int elapsed = 0;    //タイマー用
 boolean isElapsed = false;    //タイマー開始の状態を記録
@@ -268,11 +267,13 @@ void checkGameover() {
 //ゲーム画面の表示設定（マップ、ゲームオーバー、スコアの表示）
 void writeMap() {
   background(255);
+  PImage backfruit =loadImage("img/background_fruit.jpg");
+  image(backfruit, 0, 0, 500, 400);//背景画像を表示
   textSize(50);
   if (isGameover||gameOvermode) {                       //動かせなくなったら
     time = millis();        //タイマー用
     background(255, 80, 30);
-    text("Game Over", 190, 350);      //テキスト表示
+    text("Game Over", 250, 350);      //テキスト表示
     isElapsed = true;      //タイマー開始の状態を記録
   }
   for (int i = 0; i < 4; i++) {
@@ -376,6 +377,8 @@ void colorChange() {
   if (mode==3) {
     //スタートボタンを設置
     background(255);
+    PImage backchoco2 =loadImage("img/background_chocolate2.jpg");
+    image(backchoco2, 0, 0, 500, 400);//チョコのイラストの背景画像を表示
     fill(0);
     PImage gameStart =loadImage("img/gameStart_button.png");
     image(gameStart, 170, 210, 160, 80);//スタートボタンの四角
@@ -426,10 +429,9 @@ void returnToStart() {
 //lectureNumX=250;
 void lecture() {
   if (mode==4) {
-    if (lectureNumX == 100) {
+    if (lectureNumX < 100) {
       lectureletter();
       PImage numA=loadImage("img/number_4_"+numImage+".png");//4の数字の画像表示
-      
       image(numA, 100, 10, 70, 60);
       lectureNumX=lectureNumX-1;
     }else if(lectureNumX == 99){
@@ -440,7 +442,7 @@ void lecture() {
       PImage numA=loadImage("img/number_2_"+numImage+".png");//2の数字の画像表示
       image(numA, 100, 10, 70, 60);
       image(numA, lectureNumX, 10, 70, 60);
-      lectureNumX=lectureNumX-2;
+      lectureNumX=lectureNumX-1;
     } 
     if (mousePressed) {
       if (mouseX > 30 &&mouseX < 140 && mouseY > 300 && mouseY < 380) {
@@ -453,6 +455,11 @@ void lecture() {
 
 void lectureletter(){
   background(255);
+  PImage backchoco3 =loadImage("img/background_chocolate3.jpg");
+  image(backchoco3, 0, 0, 500, 400);//チョコのイラストの背景画像を表示
+  fill(255,255,255,70);
+  rect(15,10,430,60);
+  rect(15,100,480,110);
   textAlign(LEFT);
   fill(0);
   textSize(18);
@@ -470,6 +477,8 @@ void lectureletter(){
 
 void startMode(){
   background(255);
+  PImage backchoco =loadImage("img/background_chocolate4.jpg");
+  image(backchoco, 0, 0, 500, 400);//チョコのイラストの背景画像を表示
   PImage gameStart =loadImage("img/gameStart_button.png");
   image(gameStart, 170, 210, 160, 80);//スタートボタン
   PImage letterChange=loadImage("img/letterChange_button.png");//文字の背景
@@ -487,14 +496,14 @@ void letter2048(){
       PImage num0=loadImage("img/number_0_"+numImage+".png");
       PImage num4=loadImage("img/number_4_"+numImage+".png");
       PImage num8=loadImage("img/number_8_"+numImage+".png");
-      image(num2, 100, Y2, 70, Y2);//2の数字の画像表示
-      image(num0, 170, Y2, 70, Y2);//0の数字の画像表示
-      image(num4, 240, Y2, 70, Y2);//4の数字の画像表示
-      image(num8, 310, Y2, 70, Y2);//8の数字の画像表示
+      image(num2, 100, Y2, 70, Y2/1.3);//2の数字の画像表示
+      image(num0, 170, Y2, 70, Y2/1.3);//0の数字の画像表示
+      image(num4, 240, Y2, 70, Y2/1.3);//4の数字の画像表示
+      image(num8, 310, Y2, 70, Y2/1.3);//8の数字の画像表示
       Y2=Y2+2;
     }else if (Y2 == 110) {
       delay(3000);
-      Y2=-40;
+      Y2=0;
     }
   }
 }
